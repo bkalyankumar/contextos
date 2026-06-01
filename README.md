@@ -29,6 +29,28 @@ vector search, and hosted agent runtimes are intentionally out of scope.
 - Redacts common secret patterns before generated continuation output
 - Logs local continuity events without storing generated pack contents
 
+## Install
+
+After the PyPI package is published:
+
+```bash
+pip install checkpoint-cli
+```
+
+With uv:
+
+```bash
+uv tool install checkpoint-cli
+```
+
+Then verify the CLI:
+
+```bash
+checkpoint --help
+checkpoint status
+checkpoint continue
+```
+
 ## Install From Source
 
 ```bash
@@ -47,8 +69,8 @@ checkpoint status
 checkpoint continue
 ```
 
-A packaged installer is not published yet. Until then, editable install from a
-source checkout is the supported path for contributors and early testers.
+Editable install from a source checkout remains the recommended path for
+contributors.
 
 ## First Run In A Project
 
@@ -66,10 +88,16 @@ pack with inference provenance.
 Useful overrides:
 
 ```bash
-checkpoint continue --from claude
-checkpoint continue --from codex --for claude-code --task TASK-001
 checkpoint continue --output /tmp/contextos-pack.md
 checkpoint detect-agent
+```
+
+After a handoff and task file exist, you can pin the source handoff, target
+agent, or task explicitly:
+
+```bash
+checkpoint continue --from claude
+checkpoint continue --from codex --for claude-code --task TASK-001
 ```
 
 Lower-level primitives remain available when you want direct control:
