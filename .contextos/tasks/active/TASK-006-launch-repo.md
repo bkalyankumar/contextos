@@ -24,7 +24,10 @@ announcement-ready.
 
 ## Status
 
-In progress.
+In progress. Launch-prep documentation is committed locally in
+`4cf0896 docs: prepare launch plan`. Remote launch mutations are pending explicit
+user approval because pushing to `origin/main`, creating a public GitHub release,
+and making the private repository public are external/shared-state changes.
 
 ## Notes
 
@@ -32,6 +35,9 @@ In progress.
 - Do not block launch on buying a separate product domain.
 - Do not block launch on PyPI package publishing.
 - GitHub is the canonical source, issue, and release home.
+- `gh repo view` confirmed the repository is still private and has no
+  description or homepage set.
+- `gh release list` returned no releases.
 
 ## Verification
 
