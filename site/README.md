@@ -6,6 +6,7 @@ This directory contains the first static marketing/docs site for
 It is intentionally dependency-free:
 
 - `index.html` is the complete page.
+- `CNAME` declares the intended custom domain for GitHub Pages artifacts.
 - No build step is required.
 - Any static host can serve this directory.
 

@@ -26,10 +26,10 @@ announcement-ready.
 ## Status
 
 In progress. Launch-prep documentation and the static marketing site are pushed
-to `origin/main`, GitHub metadata is set, and release `v0.1.0` exists with
-verified wheel and sdist assets. Repository visibility remains private because
-the automated public visibility change was blocked for disclosure risk and must
-be completed manually by the repository owner in GitHub settings.
+to `origin/main`, GitHub metadata is set, release `v0.1.0` exists with verified
+wheel and sdist assets, and repository visibility is now public. GitHub Pages
+deployment is being wired through `.github/workflows/pages.yml`; the custom
+domain still needs DNS to resolve.
 
 ## Notes
 
@@ -37,7 +37,7 @@ be completed manually by the repository owner in GitHub settings.
 - Do not block launch on buying a separate product domain.
 - Do not block launch on PyPI package publishing.
 - GitHub is the canonical source, issue, and release home.
-- `gh repo view` confirmed the repository is still private.
+- `gh repo view` confirmed the repository is public.
 - `gh repo view` confirmed description and homepage are set.
 - `gh release view v0.1.0` confirmed the release exists and is not draft or
   prerelease.
@@ -45,6 +45,8 @@ be completed manually by the repository owner in GitHub settings.
   to `origin/main` in commit `7a64c77`.
 - `git ls-remote --heads origin main` confirmed `origin/main` is
   `7a64c774efa0bd164961d56679f0a4f6351c18c0`.
+- `.github/workflows/pages.yml` deploys `site/` to GitHub Pages with pinned
+  official Pages actions.
 - Static site structural QA passed: `ruff check .`, HTML fragment link check,
   and expected launch-link scan. Browser rendering was not available because
   Playwright is not installed in the Node kernel.
@@ -60,4 +62,6 @@ be completed manually by the repository owner in GitHub settings.
 - [x] GitHub repository metadata is set.
 - [x] GitHub release `v0.1.0` exists.
 - [x] Static marketing site exists in `site/`.
-- [ ] Repository visibility is public.
+- [x] Repository visibility is public.
+- [ ] GitHub Pages deployment is enabled and verified.
+- [ ] `contextos.quantumleapit.in` resolves and serves the static site.

@@ -90,3 +90,5 @@ Avoid hosted sync, dashboard, IDE extension, vector database, and enterprise
 claims until those features exist.
 
 The first static site lives in `site/` and can be hosted without a build step.
+GitHub Pages deployment is wired through `.github/workflows/pages.yml`, which
+uploads `site/` as the Pages artifact.

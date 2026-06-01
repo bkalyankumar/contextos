@@ -41,9 +41,10 @@ announced as an open-source project.
 - [x] Developer experience audit top gaps were fixed.
 - [x] Decide whether to cut a GitHub release before public announcement.
 - [x] Cut GitHub release `v0.1.0`.
-- [ ] Make the GitHub repository public.
+- [x] Make the GitHub repository public.
 - [x] Set the repository description and homepage.
 - [x] Add first static marketing site.
+- [ ] Enable and verify GitHub Pages deployment.
 
 ## Launch Homes
 

@@ -47,8 +47,9 @@
 - [x] open-source license
 - [x] public package install path decision
 - [x] GitHub release `v0.1.0`
-- [ ] public repository visibility
+- [x] public repository visibility
 - [x] static marketing site for `contextos.quantumleapit.in`
+- [ ] GitHub Pages deployment
 - [ ] hosted docs or public documentation site deployed at `contextos.quantumleapit.in`
 
 ## Phase 4: Repo intelligence
