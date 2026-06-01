@@ -25,10 +25,8 @@ If local ContextOS state exists, read it first:
 If those files are absent in a public clone, use the public project docs instead:
 
 1. `README.md`
-2. `docs/mvp-spec.md`
-3. `docs/technical-architecture.md`
-4. `docs/roadmap.md`
-5. `CONTRIBUTING.md`
+2. `CONTRIBUTING.md`
+3. `CHANGELOG.md`
 
 ## Product principle
 

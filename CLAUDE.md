@@ -16,13 +16,10 @@ When resuming this project, inspect local ContextOS state first if it exists:
 1. `.contextos/handoffs/latest.md`
 2. `.contextos/tasks/active/`
 3. `.contextos/plans/active-plan.md`
-4. `docs/mvp-spec.md`
-5. `docs/technical-architecture.md`
 
 In a public clone, `.contextos/` may be absent because this repository keeps its
 own agent handoffs and internal working plans local-only. In that case, start
-from `README.md`, `docs/mvp-spec.md`, `docs/technical-architecture.md`, and
-`docs/roadmap.md`.
+from `README.md`, `CONTRIBUTING.md`, and `CHANGELOG.md`.
 
 If Codex or another agent hands work back, produce a short continuation plan and
 update the relevant local task file before handing off again.

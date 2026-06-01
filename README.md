@@ -29,9 +29,45 @@ vector search, and hosted agent runtimes are intentionally out of scope.
 - Redacts common secret patterns before generated continuation output
 - Logs local continuity events without storing generated pack contents
 
+## How It Works
+
+ContextOS uses a local Markdown store plus agent-specific projections:
+
+```text
+Local Markdown Store
+  -> Projection Engine
+  -> Continuation Pack
+  -> Agent-specific Handoff
+```
+
+Project memory lives in the repository:
+
+```text
+repo/.contextos/
+  context/
+  plans/
+  tasks/
+  handoffs/
+  agents/
+  state/events.jsonl
+```
+
+User memory lives outside the repository:
+
+```text
+~/.contextos/about-me.md
+```
+
+Projection files make existing tools understand the same continuity layer:
+
+```text
+AGENTS.md
+CLAUDE.md
+```
+
 ## Install
 
-After the PyPI package is published:
+Install the packaged CLI:
 
 ```bash
 pip install checkpoint-cli
@@ -113,7 +149,6 @@ checkpoint show .contextos/handoffs/latest.md
 ```text
 src/checkpoint_cli/        Python CLI implementation
 tests/                     CLI and resolver tests
-docs/                      Public product, architecture, roadmap, and release docs
 .github/                   CI, issue templates, PR template
 ```
 
@@ -124,6 +159,67 @@ repo-native project file.
 This repository dogfoods ContextOS locally, but its own `.contextos/` state is
 kept out of git so agent handoffs, working plans, and internal references do not
 become part of the public open-core history.
+
+Public product information intentionally lives in this README and the release
+history. Longer internal docs, planning notes, launch notes, and reference
+material are kept local or in private repositories.
+
+## Current Scope
+
+Built now:
+
+- local-first Markdown memory
+- `checkpoint setup-user`
+- `checkpoint init`
+- `checkpoint status`
+- `checkpoint resume`
+- `checkpoint handoff`
+- `checkpoint continue`
+- `checkpoint detect-agent`
+- `checkpoint show`
+- agent-specific continuation packs
+- local event logging
+- final redaction for generated continuation output
+- Apache-2.0 open-core CLI and schema
+
+Intentionally out of scope for the current open-core CLI:
+
+- hosted cloud platform
+- dashboard
+- IDE extension
+- hosted agent runtime
+- Tree-sitter indexing
+- vector database
+- multi-agent runtime
+- enterprise governance
+
+## Roadmap
+
+Next likely open-core improvements:
+
+- generated `AGENTS.md` and `CLAUDE.md`
+- conflict-safe handoff history
+- clearer CLI recovery messages
+- more redaction coverage
+- better examples for real agent-switch workflows
+
+Future private/commercial surfaces:
+
+- encrypted hosted sync
+- team shared memory
+- device pairing
+- admin and governance controls
+- audit and enterprise features
+
+## Future Sync Design
+
+Before any hosted sync, ContextOS should support a passphrase-protected local
+export/import archive for moving continuity state between machines. That future
+feature should use authenticated encryption, scan included Markdown for likely
+secrets, fail closed by default, and log only metadata events.
+
+Hosted sync remains out of scope for the open-core MVP and must be encrypted
+before upload.
 
 ## Verification
 

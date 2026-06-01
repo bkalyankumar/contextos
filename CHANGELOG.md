@@ -19,7 +19,8 @@ All notable changes to Checkpoint are recorded here.
 - Added `checkpoint setup-user`, `init`, `status`, `resume`, `continue`, `handoff`, `detect-agent`, and `show`.
 - Added agent-specific context packs for Claude, Codex, Claude Code, Antigravity, and generic fallback.
 - Added durable Markdown handoffs, append-only local events, and secret redaction for generated context.
-- Added the local encrypted export/import design in `docs/encrypted-export-import.md`; implementation remains deferred.
+- Deferred local encrypted export/import until the Markdown-first local loop is
+  validated.
 
 ## Migration Notes
 
