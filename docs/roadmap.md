@@ -46,7 +46,7 @@
 - [x] package metadata
 - [x] open-source license
 - [x] public package install path decision
-- [ ] GitHub release `v0.1.0`
+- [x] GitHub release `v0.1.0`
 - [ ] public repository visibility
 - [ ] hosted docs or public documentation site at `contextos.quantumleapit.in`
 

@@ -40,9 +40,9 @@ announced as an open-source project.
 - [x] Design review recorded no UI scope.
 - [x] Developer experience audit top gaps were fixed.
 - [x] Decide whether to cut a GitHub release before public announcement.
-- [ ] Cut GitHub release `v0.1.0`.
+- [x] Cut GitHub release `v0.1.0`.
 - [ ] Make the GitHub repository public.
-- [ ] Set the repository description and homepage.
+- [x] Set the repository description and homepage.
 
 ## Launch Homes
 

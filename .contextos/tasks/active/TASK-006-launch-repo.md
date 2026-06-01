@@ -24,10 +24,11 @@ announcement-ready.
 
 ## Status
 
-In progress. Launch-prep documentation is committed locally in
-`4cf0896 docs: prepare launch plan`. Remote launch mutations are pending explicit
-user approval because pushing to `origin/main`, creating a public GitHub release,
-and making the private repository public are external/shared-state changes.
+In progress. Launch-prep documentation is pushed to `origin/main`, GitHub
+metadata is set, and release `v0.1.0` exists with verified wheel and sdist
+assets. Repository visibility remains private because the automated public
+visibility change was blocked for disclosure risk and must be completed manually
+by the repository owner in GitHub settings.
 
 ## Notes
 
@@ -35,9 +36,10 @@ and making the private repository public are external/shared-state changes.
 - Do not block launch on buying a separate product domain.
 - Do not block launch on PyPI package publishing.
 - GitHub is the canonical source, issue, and release home.
-- `gh repo view` confirmed the repository is still private and has no
-  description or homepage set.
-- `gh release list` returned no releases.
+- `gh repo view` confirmed the repository is still private.
+- `gh repo view` confirmed description and homepage are set.
+- `gh release view v0.1.0` confirmed the release exists and is not draft or
+  prerelease.
 
 ## Verification
 
@@ -47,6 +49,6 @@ and making the private repository public are external/shared-state changes.
 - [x] `pytest`
 - [x] `vulture src tests`
 - [x] `uv build`
-- [ ] GitHub repository metadata is set.
-- [ ] GitHub release `v0.1.0` exists.
+- [x] GitHub repository metadata is set.
+- [x] GitHub release `v0.1.0` exists.
 - [ ] Repository visibility is public.
