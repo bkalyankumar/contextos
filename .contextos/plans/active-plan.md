@@ -42,7 +42,7 @@ No current implementation task is assigned. Use Codex for the next scoped code c
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | clean | 5 proposals, 5 accepted, 0 deferred |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | not run | none |
 | Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | clean | 0 issues, 0 critical gaps |
-| Design Review | `/plan-design-review` | UI/UX gaps | 0 | skipped | no UI scope |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | clean | no UI scope; design review not applicable |
 | DX Review | `/devex-review` | Live developer experience audit | 1 | fixed_top_gaps | score: 5.9/10 baseline, TTHW: 12 sec, top CLI/docs/CI gaps fixed |
 
 - **UNRESOLVED:** 0
