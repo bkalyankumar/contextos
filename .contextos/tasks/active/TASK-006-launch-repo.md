@@ -25,11 +25,11 @@ announcement-ready.
 
 ## Status
 
-In progress. Launch-prep documentation is pushed to `origin/main`, GitHub
-metadata is set, and release `v0.1.0` exists with verified wheel and sdist
-assets. Repository visibility remains private because the automated public
-visibility change was blocked for disclosure risk and must be completed manually
-by the repository owner in GitHub settings.
+In progress. Launch-prep documentation and the static marketing site are pushed
+to `origin/main`, GitHub metadata is set, and release `v0.1.0` exists with
+verified wheel and sdist assets. Repository visibility remains private because
+the automated public visibility change was blocked for disclosure risk and must
+be completed manually by the repository owner in GitHub settings.
 
 ## Notes
 
@@ -41,7 +41,13 @@ by the repository owner in GitHub settings.
 - `gh repo view` confirmed description and homepage are set.
 - `gh release view v0.1.0` confirmed the release exists and is not draft or
   prerelease.
-- `site/` contains the first dependency-free static marketing site.
+- `site/` contains the first dependency-free static marketing site and is pushed
+  to `origin/main` in commit `7a64c77`.
+- `git ls-remote --heads origin main` confirmed `origin/main` is
+  `7a64c774efa0bd164961d56679f0a4f6351c18c0`.
+- Static site structural QA passed: `ruff check .`, HTML fragment link check,
+  and expected launch-link scan. Browser rendering was not available because
+  Playwright is not installed in the Node kernel.
 
 ## Verification
 
