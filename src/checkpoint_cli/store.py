@@ -17,6 +17,46 @@ SECRET_PATTERNS = [
 ]
 
 
+AGENT_PACKS = {
+    "claude": {
+        "name": "Claude planning pack",
+        "default_mode": "planning",
+        "guidance": "Focus on architecture, planning, tradeoffs, task decomposition, and continuation context.",
+        "focus": "Clarify the problem, pressure-test scope, identify missing decisions, and leave a precise plan.",
+        "context_order": "Decisions, constraints, architecture, active plan, task definition, and previous handoff.",
+        "stop_conditions": "Stop when implementation details depend on repo facts that need Codex or Claude Code verification.",
+        "next": "Review {task}, refine the plan, and leave a handoff with decisions and next steps.",
+    },
+    "codex": {
+        "name": "Codex implementation pack",
+        "default_mode": "implement",
+        "guidance": "Focus on implementation, tests, small safe changes, and writing a precise handoff before stopping.",
+        "focus": "Implement scoped changes, preserve local conventions, run checks, and update handoff/task files.",
+        "context_order": "Task definition, blocker, constraints, relevant files, plan, architecture, recent handoff.",
+        "stop_conditions": "Stop on ambiguous product scope, missing credentials, unavailable external systems, or failing checks you cannot root-cause.",
+        "next": "Continue implementing {task}, keep changes scoped, run the project checks, and leave a handoff.",
+    },
+    "claude-code": {
+        "name": "Claude Code debug pack",
+        "default_mode": "debug",
+        "guidance": "Focus on debugging, critical reasoning, minimal safe fixes, and verification.",
+        "focus": "Reproduce first, isolate root cause, fix the smallest broken behavior, and capture verification evidence.",
+        "context_order": "Current blocker, failing behavior, recent handoff, relevant files, constraints, architecture.",
+        "stop_conditions": "Stop when the failure needs credentials, production access, or product decisions outside the task.",
+        "next": "Debug {task} from the latest failing behavior, verify the fix, and leave a handoff.",
+    },
+    "antigravity": {
+        "name": "Antigravity autonomous task pack",
+        "default_mode": "autonomous",
+        "guidance": "Focus on autonomous execution with strict scope, stop conditions, and required artifacts.",
+        "focus": "Work independently through a bounded task, keep a local trail, and stop rather than widening scope.",
+        "context_order": "Scope, constraints, stop conditions, task definition, relevant files, handoff instructions.",
+        "stop_conditions": "Stop on destructive operations, unclear scope, missing tests, external credentials, or broad architecture changes.",
+        "next": "Work autonomously on {task} within the active scope, stop on blockers, and leave artifacts.",
+    },
+}
+
+
 @dataclass(frozen=True)
 class ProjectPaths:
     root: Path
@@ -294,13 +334,54 @@ def relevant_files(task_text: str) -> str:
 
 def next_action(target_agent: str, task_id: str | None) -> str:
     task_label = task_id or "the active task"
-    actions = {
-        "codex": f"Continue implementing {task_label}, keep changes scoped, run the project checks, and leave a handoff.",
-        "claude": f"Review {task_label}, refine the plan, and leave a handoff with decisions and next steps.",
-        "claude-code": f"Debug {task_label} from the latest failing behavior, verify the fix, and leave a handoff.",
-        "antigravity": f"Work autonomously on {task_label} within the active scope, stop on blockers, and leave artifacts.",
-    }
-    return actions.get(target_agent, f"Continue {task_label} using the context pack and leave a handoff before stopping.")
+    profile = AGENT_PACKS.get(target_agent)
+    if profile:
+        return profile["next"].format(task=task_label)
+    return f"Continue {task_label} using the context pack and leave a handoff before stopping."
+
+
+def agent_pack_section(target_agent: str, mode: str) -> str:
+    profile = AGENT_PACKS.get(target_agent)
+    if not profile:
+        return f"""## Agent-Specific Pack
+
+Pack: Generic context pack
+Requested mode: {mode}
+
+### Work Focus
+
+Use the context below to continue safely and leave a handoff before stopping.
+
+### Context Priority
+
+Read task state, constraints, recent handoff, plan, and architecture before changing files.
+
+### Stop Conditions
+
+Stop on unclear scope, unavailable credentials, or external systems that cannot be verified locally.
+"""
+
+    mode_note = mode
+    if mode == "implement" and profile["default_mode"] != "implement":
+        mode_note = f"{mode} requested; optimized default for this agent is {profile['default_mode']}"
+
+    return f"""## Agent-Specific Pack
+
+Pack: {profile["name"]}
+Requested mode: {mode_note}
+
+### Work Focus
+
+{profile["focus"]}
+
+### Context Priority
+
+{profile["context_order"]}
+
+### Stop Conditions
+
+{profile["stop_conditions"]}
+"""
 
 
 def generate_resume_pack(paths: ProjectPaths, *, target_agent: str, mode: str, task_id: str | None) -> str:
@@ -314,12 +395,10 @@ def generate_resume_pack(paths: ProjectPaths, *, target_agent: str, mode: str, t
     task_path = task_file(paths, task_id)
     task_text = read_text(task_path, "No active task found.") if task_path else "No active task found."
 
-    agent_guidance = {
-        "codex": "Focus on implementation, tests, small safe changes, and writing a precise handoff before stopping.",
-        "claude": "Focus on architecture, planning, tradeoffs, task decomposition, and continuation context.",
-        "claude-code": "Focus on debugging, critical reasoning, minimal safe fixes, and verification.",
-        "antigravity": "Focus on autonomous execution with strict scope, stop conditions, and required artifacts.",
-    }.get(target_agent, "Use the context below to continue safely and leave a handoff before stopping.")
+    agent_guidance = AGENT_PACKS.get(target_agent, {}).get(
+        "guidance",
+        "Use the context below to continue safely and leave a handoff before stopping.",
+    )
 
     return f"""# ContextOS Resume Pack
 
@@ -334,6 +413,8 @@ def generate_resume_pack(paths: ProjectPaths, *, target_agent: str, mode: str, t
 ## Agent Guidance
 
 {agent_guidance}
+
+{agent_pack_section(target_agent, mode)}
 
 ## Current Task And Status
 

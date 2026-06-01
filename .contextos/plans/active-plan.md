@@ -16,6 +16,13 @@ Build the first local-first Checkpoint CLI that proves the ContextOS cross-agent
 8. Add tests for init, status, resume, handoff, and continue.
 9. Leave a Codex handoff for the next agent.
 
+## Completed implementation tasks
+
+- TASK-001: local Markdown-first CLI primitives implemented and verified.
+- TASK-002: agent-specific context packs implemented and verified.
+- TASK-003: encrypted export/import design completed; implementation intentionally deferred.
+- TASK-004: `checkpoint continue` hero command implemented and verified.
+
 ## Current active implementation task
 
 TASK-004: Add `checkpoint continue` hero command.
@@ -26,7 +33,7 @@ Codex.
 
 ## Why Codex
 
-The next step is implementation of the approved CLI product surface, not further strategy.
+The core local CLI task set is implemented or intentionally resolved by design. The remaining operational step is git push once a remote is configured.
 
 ## GSTACK REVIEW REPORT
 

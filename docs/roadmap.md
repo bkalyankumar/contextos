@@ -9,19 +9,19 @@
 
 ## Phase 1: Local Markdown MVP
 
-- [ ] `checkpoint setup-user`
-- [ ] `checkpoint init`
-- [ ] `checkpoint status`
-- [ ] `checkpoint resume`
-- [ ] `checkpoint handoff`
-- [ ] tests for core commands
-- [ ] sample demo workflow
+- [x] `checkpoint setup-user`
+- [x] `checkpoint init`
+- [x] `checkpoint status`
+- [x] `checkpoint resume`
+- [x] `checkpoint handoff`
+- [x] tests for core commands
+- [x] sample demo workflow
 
 ## Phase 2: Agent projections
 
-- [ ] Codex context pack
-- [ ] Claude Code context pack
-- [ ] Antigravity autonomous task pack
+- [x] Codex context pack
+- [x] Claude Code context pack
+- [x] Antigravity autonomous task pack
 - [ ] generated `AGENTS.md`
 - [ ] generated `CLAUDE.md`
 
@@ -29,8 +29,8 @@
 
 - [ ] append-only event log
 - [ ] conflict-safe handoff history
-- [ ] local encrypted export/import
-- [ ] redaction checks for secrets
+- [x] local encrypted export/import design
+- [x] redaction checks for secrets
 
 ## Phase 4: Repo intelligence
 

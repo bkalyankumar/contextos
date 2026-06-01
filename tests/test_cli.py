@@ -121,6 +121,29 @@ None.
     assert result.output.index("## Relevant Files") < result.output.index("## Recent Handoff")
 
 
+def test_resume_outputs_agent_specific_context_packs(tmp_path):
+    init_project_with_task(tmp_path)
+
+    cases = [
+        ("claude", "planning", "Claude planning pack", "pressure-test scope"),
+        ("codex", "implement", "Codex implementation pack", "Implement scoped changes"),
+        ("claude-code", "debug", "Claude Code debug pack", "Reproduce first"),
+        ("antigravity", "autonomous", "Antigravity autonomous task pack", "bounded task"),
+    ]
+
+    for agent, mode, pack_name, expected_focus in cases:
+        result = runner.invoke(
+            app,
+            ["resume", "--root", str(tmp_path), "--for", agent, "--mode", mode, "--task", "TASK-001"],
+        )
+
+        assert result.exit_code == 0
+        assert "## Agent-Specific Pack" in result.output
+        assert f"Pack: {pack_name}" in result.output
+        assert expected_focus in result.output
+        assert "### Stop Conditions" in result.output
+
+
 def test_handoff_writes_latest_timestamped_files_and_events(tmp_path):
     result = runner.invoke(app, ["init", "--root", str(tmp_path)])
     assert result.exit_code == 0

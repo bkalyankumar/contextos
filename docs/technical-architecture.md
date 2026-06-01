@@ -106,3 +106,20 @@ Future paid sync:
 - offline-first local replica
 - append-only event sync
 - conflict-safe merge
+
+## Local encrypted export/import
+
+Before hosted sync, ContextOS should support a passphrase-protected local archive
+for moving continuity state between machines.
+
+Design source:
+
+```text
+docs/encrypted-export-import.md
+```
+
+The design keeps export/import local, Markdown-first, and explicit. It requires
+authenticated encryption, secret scanning before archive creation, conservative
+dry-run import behavior, and metadata-only event logging. Implementation is
+deferred until the core local loop has proved durable enough to justify adding a
+cryptography dependency.

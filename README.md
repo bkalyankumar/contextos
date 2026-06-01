@@ -15,6 +15,7 @@ This starter repo contains:
 - repo-level `AGENTS.md` and `CLAUDE.md` instructions
 - `.contextos/` canonical project memory
 - business plan, MVP spec, monetization plan, and technical architecture
+- local encrypted export/import design in `docs/encrypted-export-import.md`
 - Codex-ready handoff prompt and task list
 
 ## Quick start
