@@ -5,7 +5,7 @@ First read these files in order:
 1. `AGENTS.md`
 2. `.contextos/handoffs/latest.md`
 3. `.contextos/plans/active-plan.md`
-4. `.contextos/tasks/active/TASK-001.md`
+4. `checkpoint status`
 5. `docs/mvp-spec.md`
 6. `docs/technical-architecture.md`
 7. `docs/business-plan.md`
@@ -28,7 +28,9 @@ Definition of done for this Codex session:
 2. Tests pass.
 3. `checkpoint resume --for codex --task TASK-001` emits a useful context pack.
 4. `checkpoint handoff --from codex --to claude-code --task TASK-001 --status in_progress` writes a durable handoff.
-5. You update `.contextos/tasks/active/TASK-001.md` and `.contextos/handoffs/latest.md` before ending.
+5. You update the relevant task file and `.contextos/handoffs/latest.md` before ending.
+
+If you create or resume a task, keep it under `.contextos/tasks/active/` while it is in progress and move it to `.contextos/tasks/completed/` when done.
 
 At the end, leave a handoff with:
 

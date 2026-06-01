@@ -25,7 +25,7 @@ Build the first local-first Checkpoint CLI that proves the ContextOS cross-agent
 
 ## Current active implementation task
 
-TASK-004: Add `checkpoint continue` hero command.
+None. The initial local-first Checkpoint task set is complete.
 
 ## Current recommended agent
 
@@ -33,7 +33,7 @@ Codex.
 
 ## Why Codex
 
-The core local CLI task set is implemented or intentionally resolved by design. The remaining operational step is git push once a remote is configured.
+No current implementation task is assigned. Use Codex for the next scoped code change once a new task is created.
 
 ## GSTACK REVIEW REPORT
 
