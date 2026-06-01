@@ -33,7 +33,8 @@ workflow mode. The remaining launch gate is DNS for
 - Added `.github/workflows/pages.yml` for GitHub Pages deployment of `site/`.
 - Enabled GitHub Pages with build type `workflow`.
 - Set Pages custom domain to `contextos.quantumleapit.in`.
-- Triggered Pages workflow run `26768442389`; it completed successfully.
+- Triggered Pages workflow runs `26768442389` and `26768640085`; both completed
+  successfully.
 - Verified `bkalyankumar.github.io/contextos/` redirects to the configured
   custom domain.
 - Verified `contextos.quantumleapit.in` does not resolve yet; required DNS is
@@ -70,6 +71,8 @@ workflow mode. The remaining launch gate is DNS for
 - `gh api repos/bkalyankumar/contextos/pages` -> Pages enabled with
   `build_type: workflow`, `cname: contextos.quantumleapit.in`.
 - `gh run watch 26768442389 --exit-status` -> Pages deployment succeeded.
+- `gh run watch 26768640085 --exit-status` -> Pages deployment succeeded after
+  final workflow/env update.
 - `curl -I https://bkalyankumar.github.io/contextos/` -> GitHub Pages 301
   redirect to `http://contextos.quantumleapit.in/`.
 - `curl -I https://contextos.quantumleapit.in` -> DNS resolution failed.
@@ -108,8 +111,9 @@ codex
 
 Read AGENTS.md and `.contextos/handoffs/latest.md`. Continue TASK-006. The repo
 is public, GitHub metadata is set, release `v0.1.0` exists, `site/` contains the
-static marketing site, and GitHub Pages deployment succeeded. The remaining
-launch gate is DNS: add CNAME `contextos -> bkalyankumar.github.io` at the
-domain provider, then verify `https://contextos.quantumleapit.in` responds,
-enable HTTPS enforcement if needed, update TASK-006/checklist, and mark the goal
-complete if no other launch requirement is missing.
+static marketing site, and GitHub Pages deployment succeeded twice, most
+recently in run `26768640085`. The remaining launch gate is DNS: add CNAME
+`contextos -> bkalyankumar.github.io` at the domain provider, then verify
+`https://contextos.quantumleapit.in` responds, enable HTTPS enforcement if
+needed, update TASK-006/checklist, and mark the goal complete if no other launch
+requirement is missing.

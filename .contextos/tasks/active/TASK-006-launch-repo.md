@@ -50,6 +50,8 @@ domain still needs DNS to resolve.
 - GitHub Pages is enabled in workflow mode and configured with custom domain
   `contextos.quantumleapit.in`.
 - The Pages workflow completed successfully.
+- Latest Pages workflow run `26768640085` completed successfully after the
+  final workflow/env update.
 - `curl -I https://bkalyankumar.github.io/contextos/` returns a GitHub Pages
   redirect to `http://contextos.quantumleapit.in/`, confirming Pages is routing
   to the configured custom domain.
