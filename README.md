@@ -63,7 +63,7 @@ Codex should first read:
 AGENTS.md
 .contextos/handoffs/latest.md
 .contextos/plans/active-plan.md
-.contextos/tasks/active/TASK-001.md
+checkpoint status
 ```
 
 ## Product promise

@@ -43,9 +43,10 @@ Completed the full requested workflow:
 - `docs/encrypted-export-import.md`
 - `docs/technical-architecture.md`
 - `docs/roadmap.md`
-- `.contextos/tasks/active/TASK-002.md`
-- `.contextos/tasks/active/TASK-003.md`
-- `.contextos/tasks/active/TASK-004.md`
+- `.contextos/tasks/completed/TASK-001.md`
+- `.contextos/tasks/completed/TASK-002.md`
+- `.contextos/tasks/completed/TASK-003.md`
+- `.contextos/tasks/completed/TASK-004.md`
 - `.contextos/plans/active-plan.md`
 - `.contextos/handoffs/latest.md`
 - `.contextos/handoffs/codex/HOFF-20260601T123147000000Z.md`

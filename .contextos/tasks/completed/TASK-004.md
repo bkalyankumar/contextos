@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented and verified in Codex. Ready for commit/push once repository remote metadata is available.
+Implemented, verified, committed, and pushed in Codex.
 
 ## Recommended Agent
 
