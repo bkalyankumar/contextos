@@ -21,3 +21,11 @@ Then open `http://localhost:8080`.
 Before public announcement, make sure the GitHub repository is public so the
 GitHub, release, roadmap, contribution, and security links are visible to
 visitors.
+
+For the custom domain, add this DNS record at the domain provider:
+
+```text
+Type: CNAME
+Name: contextos
+Value: bkalyankumar.github.io
+```

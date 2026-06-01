@@ -47,6 +47,14 @@ domain still needs DNS to resolve.
   `7a64c774efa0bd164961d56679f0a4f6351c18c0`.
 - `.github/workflows/pages.yml` deploys `site/` to GitHub Pages with pinned
   official Pages actions.
+- GitHub Pages is enabled in workflow mode and configured with custom domain
+  `contextos.quantumleapit.in`.
+- The Pages workflow completed successfully.
+- `curl -I https://bkalyankumar.github.io/contextos/` returns a GitHub Pages
+  redirect to `http://contextos.quantumleapit.in/`, confirming Pages is routing
+  to the configured custom domain.
+- `curl -I https://contextos.quantumleapit.in` still fails DNS resolution.
+- Required DNS record: `contextos` CNAME `bkalyankumar.github.io`.
 - Static site structural QA passed: `ruff check .`, HTML fragment link check,
   and expected launch-link scan. Browser rendering was not available because
   Playwright is not installed in the Node kernel.
@@ -63,5 +71,5 @@ domain still needs DNS to resolve.
 - [x] GitHub release `v0.1.0` exists.
 - [x] Static marketing site exists in `site/`.
 - [x] Repository visibility is public.
-- [ ] GitHub Pages deployment is enabled and verified.
+- [x] GitHub Pages deployment is enabled and verified.
 - [ ] `contextos.quantumleapit.in` resolves and serves the static site.

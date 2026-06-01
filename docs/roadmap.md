@@ -49,7 +49,7 @@
 - [x] GitHub release `v0.1.0`
 - [x] public repository visibility
 - [x] static marketing site for `contextos.quantumleapit.in`
-- [ ] GitHub Pages deployment
+- [x] GitHub Pages deployment
 - [ ] hosted docs or public documentation site deployed at `contextos.quantumleapit.in`
 
 ## Phase 4: Repo intelligence

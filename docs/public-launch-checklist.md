@@ -44,7 +44,8 @@ announced as an open-source project.
 - [x] Make the GitHub repository public.
 - [x] Set the repository description and homepage.
 - [x] Add first static marketing site.
-- [ ] Enable and verify GitHub Pages deployment.
+- [x] Enable and verify GitHub Pages deployment.
+- [ ] Add DNS CNAME for `contextos.quantumleapit.in`.
 
 ## Launch Homes
 

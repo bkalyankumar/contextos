@@ -92,3 +92,15 @@ claims until those features exist.
 The first static site lives in `site/` and can be hosted without a build step.
 GitHub Pages deployment is wired through `.github/workflows/pages.yml`, which
 uploads `site/` as the Pages artifact.
+
+GitHub Pages is configured for `contextos.quantumleapit.in`. Add this DNS record
+at the domain provider:
+
+```text
+Type: CNAME
+Name: contextos
+Value: bkalyankumar.github.io
+```
+
+After DNS resolves, re-enable HTTPS enforcement in GitHub Pages settings if it
+is not already enabled.
