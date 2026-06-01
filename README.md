@@ -258,24 +258,6 @@ Next likely open-core improvements:
 - better examples for real agent-switch workflows
 - richer command output without hiding the underlying Markdown files
 
-Future private/commercial surfaces:
-
-- encrypted hosted sync
-- team shared memory
-- device pairing
-- admin and governance controls
-- audit and enterprise features
-
-## Future Sync Design
-
-Before any hosted sync, ContextOS should support a passphrase-protected local
-export/import archive for moving continuity state between machines. That future
-feature should use authenticated encryption, scan included Markdown for likely
-secrets, fail closed by default, and log only metadata events.
-
-Hosted sync remains out of scope for the open-core MVP and must be encrypted
-before upload.
-
 ## Install From Source
 
 ```bash
