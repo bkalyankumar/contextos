@@ -131,3 +131,15 @@ Decision: configure typecheck, lint, test, and dead-code checks for the MVP. Kee
 Reason: a public repository without a license is readable but does not give contributors and users clear permission to use, modify, or redistribute the code.
 
 Decision: public launch preparation may proceed, but broad announcement waits until the maintainer chooses and commits an open-source license. The chosen license is Apache-2.0 for the open-source CLI, schema, docs, and local-first workflow.
+
+## DEC-023: Launch from GitHub and QuantumLeapIT subdomain
+
+Reason: a standalone product domain is useful later but should not delay the
+first open-source launch. The scarce launch asset is developer understanding of
+the continuity workflow, not a perfect domain.
+
+Decision: use GitHub as the canonical source, issue, and release home. Use
+`contextos.quantumleapit.in` as the first marketing/docs site under the
+QuantumLeapIT company domain. Keep source install as the supported early-tester
+path for `0.1.0`; defer PyPI until external feedback confirms the package name
+and support expectations.

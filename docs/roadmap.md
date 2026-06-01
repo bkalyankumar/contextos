@@ -45,8 +45,10 @@
 - [x] launch checklist
 - [x] package metadata
 - [x] open-source license
-- [ ] public package install path
-- [ ] hosted docs or public documentation site
+- [x] public package install path decision
+- [ ] GitHub release `v0.1.0`
+- [ ] public repository visibility
+- [ ] hosted docs or public documentation site at `contextos.quantumleapit.in`
 
 ## Phase 4: Repo intelligence
 

@@ -2,7 +2,8 @@
 
 ## Objective
 
-Build the first local-first Checkpoint CLI that proves the ContextOS cross-agent continuity loop, with `checkpoint continue` as the hero command.
+Launch the first public ContextOS / Checkpoint open-source repository and
+marketing/docs presence.
 
 ## Build sequence
 
@@ -26,7 +27,7 @@ Build the first local-first Checkpoint CLI that proves the ContextOS cross-agent
 
 ## Current active implementation task
 
-None. Public launch preparation is complete.
+TASK-006: Launch repository and public site.
 
 ## Current recommended agent
 
@@ -34,7 +35,8 @@ Codex.
 
 ## Why Codex
 
-No current implementation task is assigned. Use Codex for the next scoped code change once a new task is created.
+Codex can finish the launch mechanics: verify the repo, prepare release notes,
+set GitHub metadata, create the release, and update handoff state.
 
 ## GSTACK REVIEW REPORT
 

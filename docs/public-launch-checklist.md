@@ -29,7 +29,7 @@ announced as an open-source project.
 - [x] Pull request template exists.
 - [x] README includes install-from-source and smoke-test commands.
 - [x] `pyproject.toml` includes public package metadata.
-- [ ] Publish package install path, or keep source install clearly marked as
+- [x] Publish package install path, or keep source install clearly marked as
   the supported early-tester path.
 
 ## Release Readiness
@@ -39,9 +39,19 @@ announced as an open-source project.
 - [x] Local health score is 10.0 for configured repo-owned checks.
 - [x] Design review recorded no UI scope.
 - [x] Developer experience audit top gaps were fixed.
-- [ ] Decide whether to cut a GitHub release before public announcement.
+- [x] Decide whether to cut a GitHub release before public announcement.
+- [ ] Cut GitHub release `v0.1.0`.
+- [ ] Make the GitHub repository public.
+- [ ] Set the repository description and homepage.
+
+## Launch Homes
+
+- Source, issues, and releases: `https://github.com/bkalyankumar/contextos`
+- Marketing and docs site: `https://contextos.quantumleapit.in`
+- Publisher: QuantumLeapIT
 
 ## Recommended Launch Gate
 
-The license blocker is resolved. The next launch decision is whether to cut a
-GitHub release before public announcement.
+The license blocker is resolved. The launch path is to cut `v0.1.0`, set GitHub
+metadata, make the repository public, and announce with source install as the
+supported early-tester path.
