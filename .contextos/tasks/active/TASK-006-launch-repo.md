@@ -21,15 +21,16 @@ announcement-ready.
 - Create the first GitHub release.
 - Make the GitHub repository public when final launch verification is complete.
 - Keep source install as the supported early-tester path.
-- Add the first static marketing site for `contextos.quantumleapit.in`.
+- Move the first static marketing site and Pages deployment to private
+  `contextos-site`.
 
 ## Status
 
-In progress. Launch-prep documentation and the static marketing site are pushed
-to `origin/main`, GitHub metadata is set, release `v0.1.0` exists with verified
-wheel and sdist assets, and repository visibility is now public. GitHub Pages
-deployment is being wired through `.github/workflows/pages.yml`; the custom
-domain still needs DNS to resolve.
+In progress. Open-core launch-prep documentation is pushed to `origin/main`,
+GitHub metadata is set, release `v0.1.0` exists with verified wheel and sdist
+assets, and repository visibility is public. The static marketing site and Pages
+deployment have been moved to private `contextos-site` so this repository stays
+focused on the CLI, schema, and local-first workflow.
 
 ## Notes
 
@@ -41,25 +42,15 @@ domain still needs DNS to resolve.
 - `gh repo view` confirmed description and homepage are set.
 - `gh release view v0.1.0` confirmed the release exists and is not draft or
   prerelease.
-- `site/` contains the first dependency-free static marketing site and is pushed
-  to `origin/main` in commit `7a64c77`.
-- `git ls-remote --heads origin main` confirmed `origin/main` is
-  `7a64c774efa0bd164961d56679f0a4f6351c18c0`.
-- `.github/workflows/pages.yml` deploys `site/` to GitHub Pages with pinned
-  official Pages actions.
-- GitHub Pages is enabled in workflow mode and configured with custom domain
-  `contextos.quantumleapit.in`.
-- The Pages workflow completed successfully.
-- Latest Pages workflow run `26768640085` completed successfully after the
-  final workflow/env update.
-- `curl -I https://bkalyankumar.github.io/contextos/` returns a GitHub Pages
-  redirect to `http://contextos.quantumleapit.in/`, confirming Pages is routing
-  to the configured custom domain.
-- `curl -I https://contextos.quantumleapit.in` still fails DNS resolution.
-- Required DNS record: `contextos` CNAME `bkalyankumar.github.io`.
-- Static site structural QA passed: `ruff check .`, HTML fragment link check,
-  and expected launch-link scan. Browser rendering was not available because
-  Playwright is not installed in the Node kernel.
+- Static marketing files were moved to `/Users/bkakumar/contextos-site`.
+- `contextos-site` initial commit is `f6b62d7 feat: add ContextOS marketing site`.
+- `contextos-site` was pushed to `origin/main`.
+- Open-core repo no longer contains `site/` or `.github/workflows/pages.yml`.
+- GitHub Pages was disabled on the open-core `contextos` repo; `gh api
+  repos/bkalyankumar/contextos/pages` returns 404.
+- Marketing/cloud source should remain private in `bkalyankumar/contextos-site`.
+- Static site structural QA passed after the move: HTML fragment link check and
+  expected launch-link scan.
 
 ## Verification
 
@@ -71,7 +62,8 @@ domain still needs DNS to resolve.
 - [x] `uv build`
 - [x] GitHub repository metadata is set.
 - [x] GitHub release `v0.1.0` exists.
-- [x] Static marketing site exists in `site/`.
 - [x] Repository visibility is public.
-- [x] GitHub Pages deployment is enabled and verified.
-- [ ] `contextos.quantumleapit.in` resolves and serves the static site.
+- [x] Marketing site and Pages deployment moved out of open-core repo.
+- [x] `contextos-site` is pushed.
+- [ ] Decide whether to enable public Pages deployment from private
+  `contextos-site`.

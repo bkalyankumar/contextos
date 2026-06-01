@@ -43,18 +43,17 @@ announced as an open-source project.
 - [x] Cut GitHub release `v0.1.0`.
 - [x] Make the GitHub repository public.
 - [x] Set the repository description and homepage.
-- [x] Add first static marketing site.
-- [x] Enable and verify GitHub Pages deployment.
-- [ ] Add DNS CNAME for `contextos.quantumleapit.in`.
+- [x] Move marketing site and Pages deployment out of this open-core repo.
 
 ## Launch Homes
 
 - Source, issues, and releases: `https://github.com/bkalyankumar/contextos`
 - Marketing and docs site: `https://contextos.quantumleapit.in`
+- Marketing/cloud source: private `bkalyankumar/contextos-site`
 - Publisher: QuantumLeapIT
 
 ## Recommended Launch Gate
 
-The license blocker is resolved. The launch path is to cut `v0.1.0`, set GitHub
-metadata, make the repository public, and announce with source install as the
-supported early-tester path.
+The open-core launch gate is clear: `v0.1.0` is released, repository metadata is
+set, the repository is public, and source install is the supported early-tester
+path. Marketing site and future cloud work live outside this repository.

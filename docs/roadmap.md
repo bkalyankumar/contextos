@@ -48,9 +48,8 @@
 - [x] public package install path decision
 - [x] GitHub release `v0.1.0`
 - [x] public repository visibility
-- [x] static marketing site for `contextos.quantumleapit.in`
-- [x] GitHub Pages deployment
-- [ ] hosted docs or public documentation site deployed at `contextos.quantumleapit.in`
+- [x] split marketing site and Pages deployment into private `contextos-site`
+- [ ] hosted docs or public documentation site at `contextos.quantumleapit.in`
 
 ## Phase 4: Repo intelligence
 

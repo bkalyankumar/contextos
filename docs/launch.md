@@ -5,12 +5,14 @@ This is the operational launch plan for ContextOS / Checkpoint.
 ## Launch Homes
 
 - Open-source home: `https://github.com/bkalyankumar/contextos`
-- Initial marketing and docs home: `https://contextos.quantumleapit.in`
+- Marketing, hosted docs, and cloud home: `https://contextos.quantumleapit.in`
 - Publisher: QuantumLeapIT
+- Private marketing/cloud repo: `git@github.com:bkalyankumar/contextos-site.git`
 
 The product does not need a standalone product domain for the first public
 launch. Use `contextos.quantumleapit.in` as the canonical marketing/docs site
-and keep GitHub as the canonical source, issue, and release home.
+and keep this repository as the canonical open-source CLI, schema, issue, and
+release home.
 
 ## Public Positioning
 
@@ -78,7 +80,11 @@ down the distribution name and package support expectations.
 
 ## Marketing Site
 
-The first marketing site should be small:
+The marketing site source has moved out of this open-core repository into the
+private `contextos-site` repository. Keep this repository focused on the local
+CLI, schema, examples, and contributor documentation.
+
+The first marketing site should stay small:
 
 - one homepage
 - install-from-source commands
@@ -89,12 +95,8 @@ The first marketing site should be small:
 Avoid hosted sync, dashboard, IDE extension, vector database, and enterprise
 claims until those features exist.
 
-The first static site lives in `site/` and can be hosted without a build step.
-GitHub Pages deployment is wired through `.github/workflows/pages.yml`, which
-uploads `site/` as the Pages artifact.
-
-GitHub Pages is configured for `contextos.quantumleapit.in`. Add this DNS record
-at the domain provider:
+If the private site repository uses GitHub Pages for
+`contextos.quantumleapit.in`, add this DNS record at the domain provider:
 
 ```text
 Type: CNAME
