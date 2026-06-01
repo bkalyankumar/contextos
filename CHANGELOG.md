@@ -4,6 +4,10 @@ All notable changes to Checkpoint are recorded here.
 
 ## Unreleased
 
+- Added PyPI Trusted Publishing workflow and publishing instructions for the
+  `checkpoint-cli` package.
+- Documented `pip install checkpoint-cli` and `uv tool install checkpoint-cli`
+  as the packaged install path.
 - Refreshed public launch README positioning and source-install path.
 - Added security policy, code of conduct, and public launch checklist.
 - Added public package metadata to `pyproject.toml`.
