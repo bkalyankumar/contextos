@@ -44,7 +44,7 @@
 - [x] code of conduct
 - [x] launch checklist
 - [x] package metadata
-- [ ] open-source license
+- [x] open-source license
 - [ ] public package install path
 - [ ] hosted docs or public documentation site
 

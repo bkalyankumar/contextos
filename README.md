@@ -137,5 +137,6 @@ Please keep the MVP boring and reliable:
 Public launch tracking lives in
 [docs/public-launch-checklist.md](docs/public-launch-checklist.md).
 
-One item is intentionally unresolved before launch: choose and add an open-source
-license. The repo should not be announced broadly until that decision is made.
+## License
+
+Checkpoint is licensed under the [Apache License 2.0](LICENSE).

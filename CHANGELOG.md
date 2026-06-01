@@ -7,6 +7,7 @@ All notable changes to Checkpoint are recorded here.
 - Refreshed public launch README positioning and source-install path.
 - Added security policy, code of conduct, and public launch checklist.
 - Added public package metadata to `pyproject.toml`.
+- Added Apache-2.0 license.
 
 ## 0.1.0 - 2026-06-01
 

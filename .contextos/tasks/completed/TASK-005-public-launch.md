@@ -2,7 +2,7 @@
 
 ## Status
 
-Prepared with one launch blocker.
+Complete.
 
 ## Objective
 
@@ -18,10 +18,10 @@ readiness tracking.
 - Add public launch checklist.
 - Improve package metadata.
 - Preserve MVP boundaries and avoid hosted/cloud/dashboard work.
+- Add an explicit open-source license.
 
 ## Out Of Scope
 
-- Choosing a legal license without maintainer approval.
 - Publishing a package.
 - Building a documentation site.
 - Adding cloud sync, dashboards, IDE extensions, vector search, or runtime agent
@@ -44,5 +44,6 @@ readiness tracking.
 
 ## Handoff Notes
 
-License choice remains the one hard public-launch blocker. Do not announce
-broadly until a license is chosen and committed.
+Apache-2.0 is now committed as the open-source license for the CLI, schema,
+docs, and local-first workflow. The next launch decision is whether to cut a
+GitHub release before public announcement.

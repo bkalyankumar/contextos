@@ -15,7 +15,7 @@ announced as an open-source project.
 
 ## Trust And Governance
 
-- [ ] Choose and add an open-source license.
+- [x] Choose and add an open-source license: Apache-2.0.
 - [x] Add `SECURITY.md` with private vulnerability reporting guidance.
 - [x] Add `CODE_OF_CONDUCT.md`.
 - [x] Keep GitHub Actions pinned to immutable commit SHAs.
@@ -43,6 +43,5 @@ announced as an open-source project.
 
 ## Recommended Launch Gate
 
-Do not announce broadly until the license is chosen and added. Without a license,
-people can read the code but do not have clear permission to use, modify, or
-redistribute it.
+The license blocker is resolved. The next launch decision is whether to cut a
+GitHub release before public announcement.

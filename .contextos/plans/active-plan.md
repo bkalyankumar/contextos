@@ -22,10 +22,11 @@ Build the first local-first Checkpoint CLI that proves the ContextOS cross-agent
 - TASK-002: agent-specific context packs implemented and verified.
 - TASK-003: encrypted export/import design completed; implementation intentionally deferred.
 - TASK-004: `checkpoint continue` hero command implemented and verified.
+- TASK-005: public open-source launch surfaces and Apache-2.0 license prepared.
 
 ## Current active implementation task
 
-TASK-005: prepare the repository for public open-source launch.
+None. Public launch preparation is complete.
 
 ## Current recommended agent
 
@@ -33,7 +34,7 @@ Codex.
 
 ## Why Codex
 
-Public launch preparation is mostly repo documentation, metadata, and verification work. Codex should keep the scope tight and preserve the local-first MVP boundary.
+No current implementation task is assigned. Use Codex for the next scoped code change once a new task is created.
 
 ## GSTACK REVIEW REPORT
 
