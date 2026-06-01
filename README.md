@@ -237,17 +237,6 @@ Built now:
 - final redaction for generated continuation output
 - Apache-2.0 open-core CLI and schema
 
-Intentionally out of scope for the current open-core CLI:
-
-- hosted cloud platform
-- dashboard
-- IDE extension
-- hosted agent runtime
-- Tree-sitter indexing
-- vector database
-- multi-agent runtime
-- enterprise governance
-
 ## Roadmap
 
 Next likely open-core improvements:
@@ -300,7 +289,6 @@ The same checks run in CI.
 - `checkpoint continue` applies final redaction before printing or writing a
   continuation pack.
 - Local event logs store command metadata, not generated continuation pack text.
-- Future remote sync must be encrypted before upload.
 
 Security reports should follow [SECURITY.md](SECURITY.md), not public issues.
 
@@ -313,8 +301,8 @@ Please keep the MVP boring and reliable:
 
 - Prefer readable Markdown over hidden state.
 - Prefer explicit files over magical behavior.
-- Do not add hosted sync, dashboards, IDE extensions, vector databases,
-  Tree-sitter indexing, or multi-agent runtimes to the MVP.
+- Keep changes aligned with the local-first CLI and human-readable Markdown
+  model.
 - Update tests and docs with behavior changes.
 
 ## License
