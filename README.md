@@ -29,6 +29,10 @@ checkpoint status
 checkpoint continue
 ```
 
+This repo-first flow assumes you already have the source checkout. A packaged
+installer is not published yet; until then, `pip install -e '.[dev]'` is the
+supported setup path for contributors and early testers.
+
 `checkpoint continue` is the happy path. It detects the current agent when it can,
 uses the latest handoff and active task, and prints a Markdown continuation pack
 with the inference provenance.

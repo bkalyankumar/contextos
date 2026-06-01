@@ -28,6 +28,17 @@ app = typer.Typer(no_args_is_help=True, help="Checkpoint CLI for local-first Con
 console = Console()
 
 
+def require_existing_root(root: Path) -> Path:
+    resolved = root.resolve()
+    if not resolved.exists():
+        console.print(f"Error: project root does not exist: {resolved}", markup=False)
+        raise typer.Exit(1)
+    if not resolved.is_dir():
+        console.print(f"Error: project root is not a directory: {resolved}", markup=False)
+        raise typer.Exit(1)
+    return resolved
+
+
 def print_raw(text: str) -> None:
     """Write Markdown exactly as stored/generated, without Rich markup parsing."""
     console.out(text.rstrip())
@@ -69,7 +80,7 @@ def status(
     root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
 ) -> None:
     """Show current ContextOS project status."""
-    root = root.resolve()
+    root = require_existing_root(root)
     paths = ProjectPaths(root=root)
     table = Table(title="ContextOS Status")
     table.add_column("Item")
@@ -186,5 +197,12 @@ def show(
     root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
 ) -> None:
     """Print a context file from the repo."""
-    full_path = path if path.is_absolute() else root.resolve() / path
-    print_raw(read_text(full_path, f"File not found: {full_path}"))
+    root = require_existing_root(root)
+    full_path = path if path.is_absolute() else root / path
+    if not full_path.exists():
+        console.print(f"Error: file not found: {full_path}", markup=False)
+        raise typer.Exit(1)
+    if not full_path.is_file():
+        console.print(f"Error: path is not a file: {full_path}", markup=False)
+        raise typer.Exit(1)
+    print_raw(read_text(full_path))

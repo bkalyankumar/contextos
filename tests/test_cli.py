@@ -77,6 +77,15 @@ def test_status_lists_active_tasks(tmp_path):
     assert ".contextos/tasks/active/TASK-001.md" in result.output
 
 
+def test_status_fails_for_missing_root(tmp_path):
+    missing_root = tmp_path / "missing"
+
+    result = runner.invoke(app, ["status", "--root", str(missing_root)])
+
+    assert result.exit_code == 1
+    assert "project root does not exist" in result.output
+
+
 def test_resume_outputs_raw_ordered_context_pack(tmp_path, monkeypatch):
     monkeypatch.setenv("CONTEXTOS_HOME", str(tmp_path / "home" / ".contextos"))
     result = runner.invoke(app, ["setup-user"])
@@ -352,6 +361,19 @@ def test_detect_agent_uses_allowlisted_safe_clues(monkeypatch):
     assert "CONTEXTOS_AGENT: codex" in result.output
     assert "OPENAI_API_KEY" not in result.output
     assert "sk-secret" not in result.output
+
+
+def test_show_fails_for_missing_file_and_directories(tmp_path):
+    result = runner.invoke(app, ["init", "--root", str(tmp_path)])
+    assert result.exit_code == 0
+
+    missing = runner.invoke(app, ["show", "missing.md", "--root", str(tmp_path)])
+    directory = runner.invoke(app, ["show", ".contextos", "--root", str(tmp_path)])
+
+    assert missing.exit_code == 1
+    assert "file not found" in missing.output
+    assert directory.exit_code == 1
+    assert "path is not a file" in directory.output
 
 
 def test_resolver_matrix_named_failures_and_fallback(tmp_path, monkeypatch):

@@ -43,7 +43,7 @@ No current implementation task is assigned. Use Codex for the next scoped code c
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | not run | none |
 | Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | clean | 0 issues, 0 critical gaps |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | skipped | no UI scope |
-| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | not run | none |
+| DX Review | `/devex-review` | Live developer experience audit | 1 | fixed_top_gaps | score: 5.9/10 baseline, TTHW: 12 sec, top CLI/docs/CI gaps fixed |
 
 - **UNRESOLVED:** 0
-- **VERDICT:** CEO + ENG CLEARED — ready to implement.
+- **VERDICT:** CEO + ENG CLEARED — DX audit top gaps fixed.

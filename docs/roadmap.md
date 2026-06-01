@@ -27,10 +27,20 @@
 
 ## Phase 3: Reliability
 
-- [ ] append-only event log
+- [x] append-only event log
 - [ ] conflict-safe handoff history
 - [x] local encrypted export/import design
 - [x] redaction checks for secrets
+
+## Phase 3.5: Developer experience
+
+- [x] CI workflow for tests
+- [x] bug and feature issue templates
+- [x] pull request template
+- [x] changelog skeleton
+- [x] contributor guide
+- [ ] public package install path
+- [ ] hosted docs or public documentation site
 
 ## Phase 4: Repo intelligence
 
