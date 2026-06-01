@@ -85,14 +85,17 @@ checkpoint show .contextos/handoffs/latest.md
 ```text
 src/checkpoint_cli/        Python CLI implementation
 tests/                     CLI and resolver tests
-.contextos/                Canonical project memory for this repo
-docs/                      Product, architecture, roadmap, and launch docs
+docs/                      Public product, architecture, roadmap, and release docs
 .github/                   CI, issue templates, PR template
 ```
 
 Generated ContextOS state in consuming projects is plain Markdown by design.
 You should be able to review it, edit it, diff it, and commit it like any other
 repo-native project file.
+
+This repository dogfoods ContextOS locally, but its own `.contextos/` state is
+kept out of git so agent handoffs, working plans, and internal references do not
+become part of the public open-core history.
 
 ## Verification
 
@@ -131,11 +134,6 @@ Please keep the MVP boring and reliable:
 - Do not add hosted sync, dashboards, IDE extensions, vector databases,
   Tree-sitter indexing, or multi-agent runtimes to the MVP.
 - Update tests and docs with behavior changes.
-
-## Launch Readiness
-
-Public launch tracking lives in
-[docs/public-launch-checklist.md](docs/public-launch-checklist.md).
 
 ## License
 

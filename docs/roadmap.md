@@ -42,13 +42,13 @@
 - [x] public launch README
 - [x] security policy
 - [x] code of conduct
-- [x] launch checklist
+- [x] local launch checklist
 - [x] package metadata
 - [x] open-source license
 - [x] public package install path decision
 - [x] GitHub release `v0.1.0`
 - [x] public repository visibility
-- [x] split marketing site and Pages deployment into private `contextos-site`
+- [x] split marketing site and Pages deployment out of the open-core repo
 - [ ] hosted docs or public documentation site at `contextos.quantumleapit.in`
 
 ## Phase 4: Repo intelligence

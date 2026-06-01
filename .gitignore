@@ -5,3 +5,14 @@ __pycache__/
 .contextos/state/index.sqlite
 .contextos/state/embeddings/
 .gstack/
+
+# Local ContextOS dogfood state and private planning/reference material.
+.contextos/
+contextos-codex-starter/
+references.md
+CODEX_START_PROMPT.md
+docs/business-plan.md
+docs/product-strategy.md
+docs/open-core-monetization.md
+docs/launch.md
+docs/public-launch-checklist.md

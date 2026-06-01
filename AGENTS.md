@@ -1,6 +1,8 @@
 # AGENTS.md - ContextOS Project Instructions
 
-This repository uses ContextOS-style persistent engineering memory.
+This repository uses ContextOS-style persistent engineering memory locally. The
+repo's own `.contextos/` working state is intentionally ignored so public clones
+do not receive internal agent handoffs or planning notes.
 
 ## Role
 
@@ -9,7 +11,9 @@ You are helping build ContextOS and Checkpoint.
 ContextOS is repo-native, tool-agnostic continuity infrastructure for AI-assisted software engineering.
 Checkpoint is the CLI for creating, updating, and projecting that shared context into the next AI coding tool.
 
-## Always read before work
+## Read before work
+
+If local ContextOS state exists, read it first:
 
 1. `.contextos/handoffs/latest.md`
 2. `.contextos/plans/active-plan.md`
@@ -17,6 +21,14 @@ Checkpoint is the CLI for creating, updating, and projecting that shared context
 4. `.contextos/context/architecture.md`
 5. `.contextos/context/constraints.md`
 6. Relevant task file under `.contextos/tasks/active/`
+
+If those files are absent in a public clone, use the public project docs instead:
+
+1. `README.md`
+2. `docs/mvp-spec.md`
+3. `docs/technical-architecture.md`
+4. `docs/roadmap.md`
+5. `CONTRIBUTING.md`
 
 ## Product principle
 
@@ -73,6 +85,9 @@ Before ending work, update:
 - `.contextos/handoffs/latest.md`
 - the relevant task file in `.contextos/tasks/active/`
 - `.contextos/context/decisions.md` if a durable decision was made
+
+These files are local-only in this repository. Do not force-add them unless the
+maintainer explicitly decides to publish project memory.
 
 Every handoff must include:
 

@@ -11,7 +11,7 @@ Use Claude primarily for:
 - strategy
 - hard debugging handoffs
 
-When resuming this project, first inspect:
+When resuming this project, inspect local ContextOS state first if it exists:
 
 1. `.contextos/handoffs/latest.md`
 2. `.contextos/tasks/active/`
@@ -19,7 +19,13 @@ When resuming this project, first inspect:
 4. `docs/mvp-spec.md`
 5. `docs/technical-architecture.md`
 
-If Codex or another agent hands work back, produce a short continuation plan and update the relevant task file before handing off again.
+In a public clone, `.contextos/` may be absent because this repository keeps its
+own agent handoffs and internal working plans local-only. In that case, start
+from `README.md`, `docs/mvp-spec.md`, `docs/technical-architecture.md`, and
+`docs/roadmap.md`.
+
+If Codex or another agent hands work back, produce a short continuation plan and
+update the relevant local task file before handing off again.
 
 ## Health Stack
 
