@@ -15,7 +15,16 @@ pytest
 Current `pytest` result:
 
 ```text
-15 passed
+17 passed
+```
+
+Current full health stack:
+
+```bash
+mypy src
+ruff check .
+pytest
+vulture src tests
 ```
 
 Note: a normal `pip install -e '.[dev]'` may need internet access to resolve build dependencies in a fresh environment. In an offline environment with dependencies already installed, use:

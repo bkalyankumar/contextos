@@ -39,6 +39,12 @@
 - [x] pull request template
 - [x] changelog skeleton
 - [x] contributor guide
+- [x] public launch README
+- [x] security policy
+- [x] code of conduct
+- [x] launch checklist
+- [x] package metadata
+- [ ] open-source license
 - [ ] public package install path
 - [ ] hosted docs or public documentation site
 

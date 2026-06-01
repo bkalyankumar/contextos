@@ -2,6 +2,12 @@
 
 All notable changes to Checkpoint are recorded here.
 
+## Unreleased
+
+- Refreshed public launch README positioning and source-install path.
+- Added security policy, code of conduct, and public launch checklist.
+- Added public package metadata to `pyproject.toml`.
+
 ## 0.1.0 - 2026-06-01
 
 - Added the local-first Checkpoint CLI scaffold.

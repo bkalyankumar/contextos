@@ -1,41 +1,67 @@
-# ContextOS / Checkpoint MVP Starter
+# ContextOS / Checkpoint
 
-ContextOS is a repo-native continuity layer for AI-assisted software engineering.
-Checkpoint is the CLI that lets work move across agents without losing architecture, plans, decisions, task state, implementation progress, or handoff history.
-
-Core workflow:
+ContextOS is repo-native continuity infrastructure for AI-assisted software
+engineering. Checkpoint is the local CLI that creates, updates, and projects
+that context into the next AI coding tool.
 
 ```text
 Plan in Claude -> Code in Codex -> Debug in Claude Code -> Delegate to Antigravity -> Resume anywhere
 ```
 
-This starter repo contains:
+Checkpoint is not another coding agent. It is the continuity layer beneath
+coding agents: readable Markdown memory, durable task files, durable handoffs,
+and agent-specific continuation packs.
 
-- a minimal Python + Typer CLI scaffold for `checkpoint`
-- repo-level `AGENTS.md` and `CLAUDE.md` instructions
-- `.contextos/` canonical project memory
-- business plan, MVP spec, monetization plan, and technical architecture
-- local encrypted export/import design in `docs/encrypted-export-import.md`
-- Codex-ready handoff prompt and task list
+## Status
 
-## Quick start
+Checkpoint is pre-1.0 and ready for early open-source contributors. The current
+release proves the local-first workflow; cloud sync, dashboards, IDE extensions,
+vector search, and hosted agent runtimes are intentionally out of scope.
+
+## What It Does
+
+- Creates project memory in `.contextos/`
+- Creates user memory in `~/.contextos/about-me.md`
+- Generates `AGENTS.md` and `CLAUDE.md` compatibility files
+- Tracks active tasks, completed tasks, decisions, and handoffs
+- Emits Markdown continuation packs for Codex, Claude, Claude Code,
+  Antigravity, Cursor, or a generic agent
+- Redacts common secret patterns before generated continuation output
+- Logs local continuity events without storing generated pack contents
+
+## Install From Source
 
 ```bash
+git clone git@github.com:bkalyankumar/contextos.git
+cd contextos
 python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
+```
+
+Smoke test:
+
+```bash
 checkpoint --help
 checkpoint status
 checkpoint continue
 ```
 
-This repo-first flow assumes you already have the source checkout. A packaged
-installer is not published yet; until then, `pip install -e '.[dev]'` is the
-supported setup path for contributors and early testers.
+A packaged installer is not published yet. Until then, editable install from a
+source checkout is the supported path for contributors and early testers.
 
-`checkpoint continue` is the happy path. It detects the current agent when it can,
-uses the latest handoff and active task, and prints a Markdown continuation pack
-with the inference provenance.
+## First Run In A Project
+
+```bash
+checkpoint setup-user
+checkpoint init
+checkpoint status
+checkpoint continue
+```
+
+`checkpoint continue` is the happy path. It detects the current agent when it
+can, reads the latest handoff and active task, and prints a Markdown continuation
+pack with inference provenance.
 
 Useful overrides:
 
@@ -46,51 +72,70 @@ checkpoint continue --output /tmp/contextos-pack.md
 checkpoint detect-agent
 ```
 
-The lower-level primitives remain available when you want direct control:
+Lower-level primitives remain available when you want direct control:
 
 ```bash
 checkpoint resume --for codex --task TASK-001
 checkpoint handoff --from codex --to claude-code --task TASK-001 --status in_progress
+checkpoint show .contextos/handoffs/latest.md
 ```
 
-## Recommended Codex start
-
-Open this repo in Codex and paste the contents of:
+## Repository Layout
 
 ```text
-CODEX_START_PROMPT.md
+src/checkpoint_cli/        Python CLI implementation
+tests/                     CLI and resolver tests
+.contextos/                Canonical project memory for this repo
+docs/                      Product, architecture, roadmap, and launch docs
+.github/                   CI, issue templates, PR template
 ```
 
-Codex should first read:
+Generated ContextOS state in consuming projects is plain Markdown by design.
+You should be able to review it, edit it, diff it, and commit it like any other
+repo-native project file.
 
-```text
-AGENTS.md
-.contextos/handoffs/latest.md
-.contextos/plans/active-plan.md
-checkpoint status
+## Verification
+
+Run the full local health stack:
+
+```bash
+mypy src
+ruff check .
+pytest
+vulture src tests
 ```
 
-## Product promise
+The same checks run in CI.
 
-After initial setup, every coding agent should know:
+## Privacy And Safety
 
-- who the user is and how they work
-- what this project is
-- what the current plan is
-- what task is active
-- what changed in the previous agent session
-- which constraints must not be violated
-- which agent should receive the next handoff
+- ContextOS is local-first by default.
+- Generated handoffs must not contain secrets, API keys, tokens, or private
+  credentials.
+- `checkpoint continue` applies final redaction before printing or writing a
+  continuation pack.
+- Local event logs store command metadata, not generated continuation pack text.
+- Future remote sync must be encrypted before upload.
 
-## Current MVP boundary
+Security reports should follow [SECURITY.md](SECURITY.md), not public issues.
 
-Build local-first first:
+## Contributing
 
-- local Markdown state
-- local task and handoff files
-- generated `AGENTS.md` / `CLAUDE.md`
-- basic `checkpoint init`, `status`, `continue`, `handoff`, and `resume`
-- no hosted sync yet
-- no dashboard yet
-- no IDE extension yet
-- no multi-agent runtime yet
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). Good first contributions improve
+the local-first CLI, documentation, examples, tests, and failure messages.
+
+Please keep the MVP boring and reliable:
+
+- Prefer readable Markdown over hidden state.
+- Prefer explicit files over magical behavior.
+- Do not add hosted sync, dashboards, IDE extensions, vector databases,
+  Tree-sitter indexing, or multi-agent runtimes to the MVP.
+- Update tests and docs with behavior changes.
+
+## Launch Readiness
+
+Public launch tracking lives in
+[docs/public-launch-checklist.md](docs/public-launch-checklist.md).
+
+One item is intentionally unresolved before launch: choose and add an open-source
+license. The repo should not be announced broadly until that decision is made.

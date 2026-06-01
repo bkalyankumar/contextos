@@ -125,3 +125,9 @@ Decision: `checkpoint continue` should append a sanitized event to `.contextos/s
 Reason: health checks should raise actionable repo issues instead of reporting machine-level or absent-surface failures.
 
 Decision: configure typecheck, lint, test, and dead-code checks for the MVP. Keep shell health skipped until the repo contains shell scripts, and keep GBrain health skipped because it is machine-level rather than repo-level ContextOS scope.
+
+## DEC-022: Do not broadly launch without an explicit open-source license
+
+Reason: a public repository without a license is readable but does not give contributors and users clear permission to use, modify, or redistribute the code.
+
+Decision: public launch preparation may proceed, but broad announcement waits until the maintainer chooses and commits an open-source license.
