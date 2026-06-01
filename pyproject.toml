@@ -15,7 +15,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.0.0"
+  "mypy>=1.18.0",
+  "pytest>=8.0.0",
+  "ruff>=0.14.0",
+  "vulture>=2.14"
 ]
 
 [project.scripts]
@@ -27,3 +30,22 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src"]
+strict = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+exclude = ["contextos-codex-starter"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["B008", "E501"]
+
+[tool.vulture]
+paths = ["src", "tests"]
+min_confidence = 80
+exclude = ["contextos-codex-starter"]

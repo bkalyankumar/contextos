@@ -20,3 +20,10 @@ When resuming this project, first inspect:
 5. `docs/technical-architecture.md`
 
 If Codex or another agent hands work back, produce a short continuation plan and update the relevant task file before handing off again.
+
+## Health Stack
+
+- typecheck: mypy src
+- lint: ruff check .
+- test: pytest
+- deadcode: vulture src tests

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -105,9 +104,9 @@ def status(
 def resume(
     target_agent: str = typer.Option("codex", "--for", help="Target agent: codex, claude, claude-code, antigravity."),
     mode: str = typer.Option("implement", help="Mode: planning, implement, debug, autonomous."),
-    task: Optional[str] = typer.Option(None, help="Task id or filename fragment."),
+    task: str | None = typer.Option(None, help="Task id or filename fragment."),
     root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Optional file to write the resume pack."),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Optional file to write the resume pack."),
 ) -> None:
     """Generate an ordered context pack for an agent."""
     paths = ProjectPaths(root=root.resolve())
@@ -122,11 +121,11 @@ def resume(
 
 @app.command("continue")
 def continue_command(
-    source_agent: Optional[str] = typer.Option(None, "--from", help="Source agent handoff to continue from."),
-    target_agent: Optional[str] = typer.Option(None, "--for", help="Target agent. Defaults to detected current agent."),
-    task: Optional[str] = typer.Option(None, help="Task id or filename fragment."),
+    source_agent: str | None = typer.Option(None, "--from", help="Source agent handoff to continue from."),
+    target_agent: str | None = typer.Option(None, "--for", help="Target agent. Defaults to detected current agent."),
+    task: str | None = typer.Option(None, help="Task id or filename fragment."),
     root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Optional file to write the continuation pack."),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Optional file to write the continuation pack."),
 ) -> None:
     """Continue from the latest ContextOS state with inferred source, target, and task."""
     paths = ProjectPaths(root=root.resolve())
@@ -152,7 +151,7 @@ def continue_command(
 
 @app.command("detect-agent")
 def detect_agent(
-    target_agent: Optional[str] = typer.Option(None, "--for", help="Override target agent for diagnostics."),
+    target_agent: str | None = typer.Option(None, "--for", help="Override target agent for diagnostics."),
 ) -> None:
     """Print conservative current-agent detection diagnostics."""
     print_raw(detect_agent_report(target_agent))

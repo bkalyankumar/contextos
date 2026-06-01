@@ -119,3 +119,9 @@ Decision: add table-style resolver tests covering source inference, target fallb
 Reason: ContextOS needs a local continuity trail for debugging and future status/history views, but generated pack content and secrets must not be logged.
 
 Decision: `checkpoint continue` should append a sanitized event to `.contextos/state/events.jsonl` with non-secret metadata such as command, target, source, task, fallback reason, output mode, and outcome. Do not log continuation pack content.
+
+## DEC-021: Keep repo health checks tied to repo-owned surfaces
+
+Reason: health checks should raise actionable repo issues instead of reporting machine-level or absent-surface failures.
+
+Decision: configure typecheck, lint, test, and dead-code checks for the MVP. Keep shell health skipped until the repo contains shell scripts, and keep GBrain health skipped because it is machine-level rather than repo-level ContextOS scope.

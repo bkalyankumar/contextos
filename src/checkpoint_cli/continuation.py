@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from pathlib import Path
 import os
 import re
-from typing import Mapping
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from pathlib import Path
 
 from .store import (
     ProjectPaths,
@@ -15,7 +15,6 @@ from .store import (
     redact_secrets,
     task_file,
 )
-
 
 KNOWN_AGENTS = {"antigravity", "claude", "claude-code", "codex", "cursor", "generic"}
 AGENT_CLUE_ENV = {

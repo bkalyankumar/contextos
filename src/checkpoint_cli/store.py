@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from pathlib import Path
 import json
 import os
 import re
-from typing import Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 
 from .templates import AGENTS_MD, CLAUDE_MD, PROJECT_CONTEXT_FILES, USER_ABOUT_ME
-
 
 SECRET_PATTERNS = [
     re.compile(r"(?i)\b(api[_-]?key|secret|token|password|private[_-]?token)\s*[:=]\s*([^\s`]+)"),
@@ -188,7 +187,7 @@ def init_project(root: Path, overwrite: bool = False) -> list[Path]:
     return written
 
 
-def append_event(paths: ProjectPaths, event: dict) -> None:
+def append_event(paths: ProjectPaths, event: dict[str, object]) -> None:
     paths.events_file.parent.mkdir(parents=True, exist_ok=True)
     payload = {"created_at": now_iso(), **event}
     with paths.events_file.open("a", encoding="utf-8") as f:
