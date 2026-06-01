@@ -43,6 +43,7 @@ announced as an open-source project.
 - [x] Cut GitHub release `v0.1.0`.
 - [ ] Make the GitHub repository public.
 - [x] Set the repository description and homepage.
+- [x] Add first static marketing site.
 
 ## Launch Homes
 

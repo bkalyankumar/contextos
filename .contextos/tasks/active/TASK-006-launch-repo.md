@@ -21,6 +21,7 @@ announcement-ready.
 - Create the first GitHub release.
 - Make the GitHub repository public when final launch verification is complete.
 - Keep source install as the supported early-tester path.
+- Add the first static marketing site for `contextos.quantumleapit.in`.
 
 ## Status
 
@@ -40,6 +41,7 @@ by the repository owner in GitHub settings.
 - `gh repo view` confirmed description and homepage are set.
 - `gh release view v0.1.0` confirmed the release exists and is not draft or
   prerelease.
+- `site/` contains the first dependency-free static marketing site.
 
 ## Verification
 
@@ -51,4 +53,5 @@ by the repository owner in GitHub settings.
 - [x] `uv build`
 - [x] GitHub repository metadata is set.
 - [x] GitHub release `v0.1.0` exists.
+- [x] Static marketing site exists in `site/`.
 - [ ] Repository visibility is public.
