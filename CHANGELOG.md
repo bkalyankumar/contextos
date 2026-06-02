@@ -4,6 +4,16 @@ All notable changes to Checkpoint are recorded here.
 
 ## Unreleased
 
+## 0.1.3 - 2026-06-02
+
+- Added friendly filesystem recovery errors for local ContextOS writes so
+  setup, init, handoff, and resume output failures do not print Python
+  tracebacks.
+- Added a reusable `checkpoint continue` demo script with isolated home state
+  and meaningful seeded project context.
+- Updated public examples and README quickstart guidance around the hero
+  `checkpoint continue` flow.
+
 ## 0.1.2 - 2026-06-02
 
 - Fixed build error: removed `License ::` classifier superseded by PEP 639 SPDX expression.

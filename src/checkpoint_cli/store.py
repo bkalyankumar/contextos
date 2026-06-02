@@ -16,6 +16,15 @@ SECRET_PATTERNS = [
 ]
 
 
+class StoreFilesystemError(Exception):
+    """User-facing filesystem failure with a concrete recovery hint."""
+
+    recovery = (
+        "Check that the path is writable. For user context, set `CONTEXTOS_HOME` "
+        "to a writable directory. For project context, pass `--root` for a writable project."
+    )
+
+
 AGENT_PACKS = {
     "claude": {
         "name": "Claude planning pack",
@@ -114,11 +123,26 @@ def user_context_dir() -> Path:
     return Path(os.environ.get("CONTEXTOS_HOME", Path.home() / ".contextos")).expanduser()
 
 
+def describe_filesystem_error(action: str, path: Path, exc: OSError) -> StoreFilesystemError:
+    reason = exc.strerror or str(exc)
+    return StoreFilesystemError(f"Could not {action} `{path}`: {reason}.")
+
+
+def ensure_dir(path: Path, action: str = "create directory") -> None:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise describe_filesystem_error(action, path, exc) from exc
+
+
 def safe_write(path: Path, content: str, overwrite: bool = False) -> bool:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists() and not overwrite:
-        return False
-    path.write_text(content.rstrip() + "\n", encoding="utf-8")
+    ensure_dir(path.parent)
+    try:
+        if path.exists() and not overwrite:
+            return False
+        path.write_text(content.rstrip() + "\n", encoding="utf-8")
+    except OSError as exc:
+        raise describe_filesystem_error("write file", path, exc) from exc
     return True
 
 
@@ -159,7 +183,7 @@ def init_project(root: Path, overwrite: bool = False) -> list[Path]:
         paths.sessions_dir,
         paths.state_dir,
     ]:
-        directory.mkdir(parents=True, exist_ok=True)
+        ensure_dir(directory)
 
     for filename, content in PROJECT_CONTEXT_FILES.items():
         target = paths.context_dir / filename
@@ -181,17 +205,23 @@ def init_project(root: Path, overwrite: bool = False) -> list[Path]:
     if safe_write(root / "CLAUDE.md", CLAUDE_MD, overwrite=overwrite):
         written.append(root / "CLAUDE.md")
 
-    paths.events_file.parent.mkdir(parents=True, exist_ok=True)
-    paths.events_file.touch(exist_ok=True)
+    ensure_dir(paths.events_file.parent)
+    try:
+        paths.events_file.touch(exist_ok=True)
+    except OSError as exc:
+        raise describe_filesystem_error("create event log", paths.events_file, exc) from exc
     append_event(paths, {"type": "project.initialized"})
     return written
 
 
 def append_event(paths: ProjectPaths, event: dict[str, object]) -> None:
-    paths.events_file.parent.mkdir(parents=True, exist_ok=True)
+    ensure_dir(paths.events_file.parent)
     payload = {"created_at": now_iso(), **event}
-    with paths.events_file.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(payload, sort_keys=True) + "\n")
+    try:
+        with paths.events_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(payload, sort_keys=True) + "\n")
+    except OSError as exc:
+        raise describe_filesystem_error("append event", paths.events_file, exc) from exc
 
 
 def list_active_tasks(paths: ProjectPaths) -> list[Path]:
@@ -232,7 +262,7 @@ def create_handoff(
     created_at = now_iso()
     handoff_id_value = handoff_id()
     agent_dir = paths.handoffs_dir / from_agent
-    agent_dir.mkdir(parents=True, exist_ok=True)
+    ensure_dir(agent_dir)
     target = agent_dir / f"{handoff_id_value}.md"
     clean_summary = redact_secrets(summary)
     clean_tests_run = redact_secrets(tests_run)

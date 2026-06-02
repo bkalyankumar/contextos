@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
@@ -61,6 +65,31 @@ def test_setup_user_and_init_preserve_existing_files(tmp_path, monkeypatch):
     assert result.exit_code == 0
     assert "Keep me." in project_summary.read_text(encoding="utf-8")
     assert "Existing files were preserved" in result.output
+
+
+def test_setup_user_reports_filesystem_failures_without_traceback(tmp_path, monkeypatch):
+    blocked = tmp_path / "blocked"
+    blocked.write_text("not a directory", encoding="utf-8")
+    monkeypatch.setenv("CONTEXTOS_HOME", str(blocked / ".contextos"))
+
+    result = runner.invoke(app, ["setup-user"])
+
+    assert result.exit_code == 1
+    assert "Could not create directory" in result.output
+    assert "CONTEXTOS_HOME" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_init_reports_filesystem_failures_without_traceback(tmp_path):
+    blocked = tmp_path / "blocked"
+    blocked.write_text("not a directory", encoding="utf-8")
+
+    result = runner.invoke(app, ["init", "--root", str(blocked / "repo")])
+
+    assert result.exit_code == 1
+    assert "Could not create directory" in result.output
+    assert "--root" in result.output
+    assert "Traceback" not in result.output
 
 
 def test_status_lists_active_tasks(tmp_path):
@@ -153,6 +182,20 @@ def test_resume_outputs_agent_specific_context_packs(tmp_path):
         assert "### Stop Conditions" in result.output
 
 
+def test_resume_output_write_failure_is_named(tmp_path):
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["resume", "--root", str(tmp_path), "--for", "codex", "--task", "TASK-001", "--output", str(tmp_path)],
+    )
+
+    assert result.exit_code == 1
+    assert "Could not write file" in result.output
+    assert "writable" in result.output
+    assert "Traceback" not in result.output
+
+
 def test_handoff_writes_latest_timestamped_files_and_events(tmp_path):
     result = runner.invoke(app, ["init", "--root", str(tmp_path)])
     assert result.exit_code == 0
@@ -199,6 +242,34 @@ def test_handoff_writes_latest_timestamped_files_and_events(tmp_path):
     ]
     assert events[-1]["type"] == "handoff.created"
     assert events[-1]["to_agent"] == "claude-code"
+
+
+def test_handoff_reports_filesystem_failures_without_traceback(tmp_path):
+    init_project_with_task(tmp_path)
+    blocked_agent_dir = tmp_path / ".contextos" / "handoffs" / "codex"
+    blocked_agent_dir.write_text("not a directory", encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        [
+            "handoff",
+            "--root",
+            str(tmp_path),
+            "--from",
+            "codex",
+            "--to",
+            "claude-code",
+            "--task",
+            "TASK-001",
+            "--summary",
+            "Done.",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Could not create directory" in result.output
+    assert "writable" in result.output
+    assert "Traceback" not in result.output
 
 
 def test_continue_from_source_to_target_emits_provenance_and_pack(tmp_path):
@@ -348,6 +419,37 @@ def test_continue_output_writes_pack_and_sanitized_event(tmp_path):
     assert events[-1]["target_agent"] == "codex"
     assert events[-1]["output"] == str(output)
     assert "ContextOS Resume Pack" not in json.dumps(events[-1])
+
+
+def test_checkpoint_demo_script_runs_with_isolated_home(tmp_path):
+    checkpoint_wrapper = tmp_path / "checkpoint-wrapper"
+    checkpoint_wrapper.write_text(
+        f"""#!{sys.executable}
+from checkpoint_cli.cli import app
+
+app()
+""",
+        encoding="utf-8",
+    )
+    checkpoint_wrapper.chmod(0o755)
+    script = Path(__file__).resolve().parents[1] / "examples" / "checkpoint-demo.sh"
+    env = {**os.environ, "CHECKPOINT_BIN": str(checkpoint_wrapper)}
+
+    result = subprocess.run(
+        [str(script), str(tmp_path / "demo-root")],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "## Continuation Provenance" in result.stdout
+    assert "Tiny Notes is a small demo app" in result.stdout
+    assert "DEC-001: Keep the first feature tiny" in result.stdout
+    assert "Describe what this project is" not in result.stdout
+    assert "List non-negotiable constraints" not in result.stdout
+    assert (tmp_path / "demo-root" / "home" / ".contextos" / "about-me.md").exists()
 
 
 def test_detect_agent_uses_allowlisted_safe_clues(monkeypatch):

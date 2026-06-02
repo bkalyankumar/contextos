@@ -15,16 +15,23 @@ from .continuation import (
 )
 from .store import (
     ProjectPaths,
+    StoreFilesystemError,
     create_handoff,
     generate_resume_pack,
     init_project,
     init_user,
     list_active_tasks,
     read_text,
+    safe_write,
 )
 
 app = typer.Typer(no_args_is_help=True, help="Checkpoint CLI for local-first ContextOS continuity")
 console = Console()
+
+
+def print_filesystem_error(exc: StoreFilesystemError) -> None:
+    console.print(f"Error: {exc}", markup=False)
+    console.print(exc.recovery, markup=False)
 
 
 def require_existing_root(root: Path) -> Path:
@@ -48,7 +55,11 @@ def setup_user(
     overwrite: bool = typer.Option(False, help="Overwrite existing user files."),
 ) -> None:
     """Create user-level ContextOS files under ~/.contextos."""
-    written = init_user(overwrite=overwrite)
+    try:
+        written = init_user(overwrite=overwrite)
+    except StoreFilesystemError as exc:
+        print_filesystem_error(exc)
+        raise typer.Exit(1) from exc
     if written:
         console.print("Created user context files:", markup=False)
         for path in written:
@@ -64,7 +75,11 @@ def init(
 ) -> None:
     """Initialize project-level ContextOS files."""
     root = root.resolve()
-    written = init_project(root=root, overwrite=overwrite)
+    try:
+        written = init_project(root=root, overwrite=overwrite)
+    except StoreFilesystemError as exc:
+        print_filesystem_error(exc)
+        raise typer.Exit(1) from exc
     console.print(f"Initialized ContextOS project at {root}", markup=False)
     if written:
         console.print("Created files:", markup=False)
@@ -112,8 +127,11 @@ def resume(
     paths = ProjectPaths(root=root.resolve())
     pack = generate_resume_pack(paths, target_agent=target_agent, mode=mode, task_id=task)
     if output:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(pack, encoding="utf-8")
+        try:
+            safe_write(output, pack, overwrite=True)
+        except StoreFilesystemError as exc:
+            print_filesystem_error(exc)
+            raise typer.Exit(1) from exc
         console.print(f"Wrote resume pack to {output}", markup=False)
     else:
         print_raw(pack)
@@ -173,19 +191,23 @@ def handoff(
 ) -> None:
     """Create a durable handoff and update latest.md."""
     paths = ProjectPaths(root=root.resolve())
-    target = create_handoff(
-        paths,
-        from_agent=from_agent,
-        to_agent=to_agent,
-        task_id=task,
-        status=status_value,
-        summary=summary,
-        files_changed=[item.strip() for item in files.split(",") if item.strip()],
-        tests_run=tests,
-        blockers=blockers,
-        decisions=decisions,
-        continuation_prompt=continuation,
-    )
+    try:
+        target = create_handoff(
+            paths,
+            from_agent=from_agent,
+            to_agent=to_agent,
+            task_id=task,
+            status=status_value,
+            summary=summary,
+            files_changed=[item.strip() for item in files.split(",") if item.strip()],
+            tests_run=tests,
+            blockers=blockers,
+            decisions=decisions,
+            continuation_prompt=continuation,
+        )
+    except StoreFilesystemError as exc:
+        print_filesystem_error(exc)
+        raise typer.Exit(1) from exc
     console.print(f"Created handoff: {target.relative_to(root.resolve())}", markup=False)
     console.print(f"Updated latest handoff: {paths.latest_handoff.relative_to(root.resolve())}", markup=False)
 

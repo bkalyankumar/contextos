@@ -74,6 +74,15 @@ checkpoint status
 checkpoint continue
 ```
 
+Or run the tiny demo flow from a source checkout:
+
+```bash
+CHECKPOINT_BIN=.venv/bin/checkpoint bash examples/checkpoint-demo.sh
+```
+
+The demo creates a temporary project, seeds meaningful local Markdown context,
+records a Claude-to-Codex handoff, and prints a Codex continuation pack.
+
 Typical `checkpoint status` output:
 
 ```text
