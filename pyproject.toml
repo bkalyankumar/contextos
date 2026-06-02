@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "checkpoint-cli"
-version = "0.1.0"
-description = "Local-first CLI for ContextOS repo-native AI engineering continuity"
+version = "0.1.1"
+description = "Give any AI coding agent instant context on your project — resume anywhere in seconds"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
@@ -14,22 +14,31 @@ authors = [
 ]
 keywords = [
   "ai",
-  "agents",
+  "ai-agents",
+  "claude",
   "cli",
-  "context",
+  "codex",
+  "context-engineering",
   "developer-tools",
   "handoff",
-  "markdown"
+  "llm",
+  "markdown",
+  "multi-agent"
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
   "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Software Development",
+  "Topic :: Software Development :: Version Control",
   "Topic :: Utilities"
 ]
 dependencies = [
@@ -39,6 +48,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/bkalyankumar/contextos"
+Documentation = "https://github.com/bkalyankumar/contextos#readme"
 Issues = "https://github.com/bkalyankumar/contextos/issues"
 Changelog = "https://github.com/bkalyankumar/contextos/blob/main/CHANGELOG.md"
 

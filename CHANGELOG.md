@@ -4,6 +4,11 @@ All notable changes to Checkpoint are recorded here.
 
 ## Unreleased
 
+## 0.1.1 - 2026-06-02
+
+- Improved PyPI listing: clearer description, richer keywords, additional
+  classifiers (license, OS, Python 3.13, version control topic), and
+  Documentation URL.
 - Added PyPI Trusted Publishing workflow and publishing instructions for the
   `checkpoint-cli` package.
 - Documented `pip install checkpoint-cli` and `uv tool install checkpoint-cli`
