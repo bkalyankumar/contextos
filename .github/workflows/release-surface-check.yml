@@ -1,0 +1,29 @@
+name: Release Surface Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      check_pypi:
+        description: "Also verify PyPI latest version matches pyproject.toml"
+        required: false
+        default: "false"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        # actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Check release surfaces
+        run: |
+          args=()
+          if [ "${{ github.event.inputs.check_pypi || 'false' }}" = "true" ]; then
+            args+=(--check-pypi)
+          fi
+          python scripts/sync_release_surfaces.py "${args[@]}"
