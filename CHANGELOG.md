@@ -4,6 +4,10 @@ All notable changes to Checkpoint are recorded here.
 
 ## Unreleased
 
+## 0.1.2 - 2026-06-02
+
+- Fixed build error: removed `License ::` classifier superseded by PEP 639 SPDX expression.
+
 ## 0.1.1 - 2026-06-02
 
 - Improved PyPI listing: clearer description, richer keywords, additional
