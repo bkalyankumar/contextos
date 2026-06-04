@@ -42,12 +42,26 @@ from .store import (
     read_text,
     safe_write,
 )
+from .sync import (
+    SyncConfig,
+    SyncConfigError,
+    SyncCryptoError,
+    SyncDependencyError,
+    SyncError,
+    sync_config_payload,
+    sync_pull,
+    sync_push,
+    sync_status,
+    write_sync_config,
+)
 
 app = typer.Typer(no_args_is_help=True, help="Checkpoint CLI for local-first ContextOS continuity")
 map_app = typer.Typer(help="Build and query the local ContextOS RepoMap.")
 memory_app = typer.Typer(help="Inspect local failure, strategy, and area memory.")
+sync_app = typer.Typer(help="Opt-in encrypted sync with ContextOS Cloud.")
 app.add_typer(map_app, name="map")
 app.add_typer(memory_app, name="memory")
+app.add_typer(sync_app, name="sync")
 console = Console()
 
 
@@ -80,6 +94,10 @@ def relative_receipt_path(path: Path | str | None, root: Path) -> str:
         return str(resolved.relative_to(root.resolve()))
     except ValueError:
         return str(resolved)
+
+
+def print_sync_error(exc: SyncError) -> None:
+    console.print(f"Error: {exc}", markup=False)
 
 
 @app.command("setup-user")
@@ -470,6 +488,97 @@ def memory_search(
         record = match["record"]
         label = record.get("message") or record.get("summary") or record.get("task_id", "")
         console.print(f"{match['kind']} score={match['score']}: {label}", markup=False)
+
+
+@sync_app.command("configure")
+def sync_configure(
+    endpoint: str = typer.Option(..., "--endpoint", help="ContextOS Cloud endpoint."),
+    organization: str = typer.Option(..., "--organization", help="Organization id."),
+    project: str = typer.Option(..., "--project", help="Project id."),
+    repository: str = typer.Option(..., "--repository", help="Repository id."),
+    client: str = typer.Option(..., "--client", help="Client/user id for sync audit metadata."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable config."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Configure opt-in encrypted sync for this local project."""
+    paths = ProjectPaths(root=root.resolve())
+    config = SyncConfig(
+        endpoint=endpoint.rstrip("/"),
+        organization_id=organization,
+        project_id=project,
+        repository_id=repository,
+        client_id=client,
+    )
+    try:
+        target = write_sync_config(paths, config)
+    except StoreFilesystemError as exc:
+        print_filesystem_error(exc)
+        raise typer.Exit(1) from exc
+    payload = sync_config_payload(config)
+    if json_flag:
+        print_raw(json_output({"status": "configured", "path": target, "config": payload}))
+        return
+    console.print(f"Configured sync: {target.relative_to(root.resolve())}", markup=False)
+
+
+@sync_app.command("status")
+def sync_status_command(
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable sync status."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Show cloud sync status for this project."""
+    try:
+        result = sync_status(ProjectPaths(root=root.resolve()))
+    except (SyncConfigError, SyncDependencyError, SyncCryptoError, SyncError) as exc:
+        print_sync_error(exc)
+        raise typer.Exit(1) from exc
+    if json_flag:
+        print_raw(json_output(result))
+        return
+    console.print(f"Bundle count: {result.get('bundle_count', 0)}", markup=False)
+    console.print(f"Latest bundle: {result.get('latest_bundle_id') or 'none'}", markup=False)
+
+
+@sync_app.command("push")
+def sync_push_command(
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable push result."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Encrypt and push local .contextos state to ContextOS Cloud."""
+    try:
+        result = sync_push(ProjectPaths(root=root.resolve()))
+    except (SyncConfigError, SyncDependencyError, SyncCryptoError, SyncError, StoreFilesystemError) as exc:
+        if isinstance(exc, StoreFilesystemError):
+            print_filesystem_error(exc)
+        else:
+            print_sync_error(exc)
+        raise typer.Exit(1) from exc
+    if json_flag:
+        print_raw(json_output(result))
+        return
+    console.print(f"Pushed sync bundle: {result.get('bundle_id', 'unknown')}", markup=False)
+
+
+@sync_app.command("pull")
+def sync_pull_command(
+    bundle_id: str = typer.Option(..., "--bundle", help="Bundle id to download."),
+    output: Path = typer.Option(..., "--output", "-o", help="File path to write the decrypted bundle archive."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable pull result."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Download and decrypt a sync bundle to an explicit output path."""
+    try:
+        result = sync_pull(ProjectPaths(root=root.resolve()), bundle_id=bundle_id, output=output)
+    except (SyncConfigError, SyncDependencyError, SyncCryptoError, SyncError, StoreFilesystemError) as exc:
+        if isinstance(exc, StoreFilesystemError):
+            print_filesystem_error(exc)
+        else:
+            print_sync_error(exc)
+        raise typer.Exit(1) from exc
+    if json_flag:
+        print_raw(json_output(result))
+        return
+    console.print(f"Wrote decrypted sync bundle: {result['output']}", markup=False)
 
 
 @app.command("mcp-server")

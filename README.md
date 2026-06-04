@@ -281,6 +281,22 @@ clients that should be able to call finalize and write handoff/runtime state.
 The `--check` mode validates optional MCP registration without starting the
 server or writing local ContextOS state.
 
+Optional encrypted sync is available for early ContextOS Cloud contract testing:
+
+```bash
+pip install "checkpoint-cli[sync]"
+export CONTEXTOS_SYNC_KEY="your-local-sync-secret"
+checkpoint sync configure --endpoint http://localhost:8000 \
+  --organization org-1 --project proj-1 --repository repo-1 --client alice
+checkpoint sync status
+checkpoint sync push
+checkpoint sync pull --bundle bundle_123 --output /tmp/contextos-bundle.zip
+```
+
+Sync is opt-in. The key is read from `CONTEXTOS_SYNC_KEY` and is never written
+to project files. Cloud receives ciphertext bundles only; `pull` writes to an
+explicit output path and does not overwrite `.contextos/`.
+
 Generated compatibility files make existing tools understand the same
 continuity layer:
 

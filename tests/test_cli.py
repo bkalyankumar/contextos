@@ -23,6 +23,7 @@ from checkpoint_cli.continuation import (
 )
 from checkpoint_cli.runtime import json_safe_payload, mcp_server
 from checkpoint_cli.store import ProjectPaths
+from checkpoint_cli.sync import decrypt_text, encrypt_bytes, package_contextos
 
 runner = CliRunner()
 
@@ -46,6 +47,29 @@ Ready
         encoding="utf-8",
     )
     return task_path
+
+
+def configure_sync(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "sync",
+            "configure",
+            "--root",
+            str(tmp_path),
+            "--endpoint",
+            "https://cloud.example.test",
+            "--organization",
+            "org-1",
+            "--project",
+            "proj-1",
+            "--repository",
+            "repo-1",
+            "--client",
+            "client-1",
+        ],
+    )
+    assert result.exit_code == 0
 
 
 def test_setup_user_and_init_preserve_existing_files(tmp_path, monkeypatch):
@@ -753,6 +777,195 @@ def test_history_and_memory_commands_surface_runtime_records(tmp_path, monkeypat
     assert memory_payload["strategies"][0]["summary"] == "Implemented parser strategy."
     assert memory_search.exit_code == 0
     assert json.loads(memory_search.output)["matches"][0]["kind"] == "failure"
+
+
+def test_sync_configure_writes_local_config(tmp_path):
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "sync",
+            "configure",
+            "--root",
+            str(tmp_path),
+            "--endpoint",
+            "https://cloud.example.test/",
+            "--organization",
+            "org-1",
+            "--project",
+            "proj-1",
+            "--repository",
+            "repo-1",
+            "--client",
+            "client-1",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    config_path = tmp_path / ".contextos" / "sync" / "config.json"
+    assert config_path.exists()
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    assert config["endpoint"] == "https://cloud.example.test"
+    assert config["organization_id"] == "org-1"
+    payload = json.loads(result.output)
+    assert payload["status"] == "configured"
+
+
+def test_sync_status_fails_when_not_configured(tmp_path):
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(app, ["sync", "status", "--root", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "checkpoint sync configure" in result.output
+
+
+def test_sync_status_calls_cloud_contract(tmp_path, monkeypatch):
+    init_project_with_task(tmp_path)
+    configure_sync(tmp_path)
+    calls = []
+
+    def fake_http(method, url, payload=None):
+        calls.append((method, url, payload))
+        return {
+            "organization_id": "org-1",
+            "project_id": "proj-1",
+            "repository_id": "repo-1",
+            "bundle_count": 1,
+            "latest_bundle_id": "bundle_123",
+            "latest_content_hash": "sha256:abc",
+            "updated_at": "2026-06-04T00:00:00Z",
+        }
+
+    monkeypatch.setattr("checkpoint_cli.sync.http_json", fake_http)
+
+    result = runner.invoke(app, ["sync", "status", "--root", str(tmp_path), "--json"])
+
+    assert result.exit_code == 0
+    assert calls == [
+        (
+            "GET",
+            "https://cloud.example.test/v1/orgs/org-1/projects/proj-1/repos/repo-1/sync/status",
+            None,
+        )
+    ]
+    assert json.loads(result.output)["latest_bundle_id"] == "bundle_123"
+
+
+def test_sync_push_registers_project_uploads_ciphertext_and_emits_event(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_SYNC_KEY", "test-sync-key")
+    init_project_with_task(tmp_path)
+    configure_sync(tmp_path)
+    (tmp_path / ".contextos" / "context" / "decisions.md").write_text(
+        "# Decisions\n\nDo not leak this decision.\n",
+        encoding="utf-8",
+    )
+    calls = []
+
+    def fake_http(method, url, payload=None):
+        calls.append((method, url, payload))
+        if url.endswith("/v1/projects"):
+            return {"project_id": "proj-1"}
+        return {
+            "organization_id": "org-1",
+            "project_id": "proj-1",
+            "repository_id": "repo-1",
+            "client_id": "client-1",
+            "bundle_id": "bundle_123",
+            "schema_version": "contextos.sync.v1",
+            "content_hash": payload["content_hash"],
+            "created_at": "2026-06-04T00:00:00Z",
+            "audit_actor": "client-1",
+        }
+
+    monkeypatch.setattr("checkpoint_cli.sync.http_json", fake_http)
+
+    result = runner.invoke(app, ["sync", "push", "--root", str(tmp_path), "--json"])
+
+    assert result.exit_code == 0
+    assert [call[0] for call in calls] == ["POST", "POST"]
+    upload = calls[1][2]
+    encrypted_payload = upload["encrypted_payload"]
+    assert "Do not leak this decision" not in encrypted_payload
+    assert ".contextos" not in encrypted_payload
+    assert "TASK-001" not in encrypted_payload
+    assert json.loads(result.output)["bundle_id"] == "bundle_123"
+    events = (tmp_path / ".contextos" / "state" / "events.jsonl").read_text(encoding="utf-8")
+    assert "sync.pushed" in events
+
+
+def test_sync_push_fails_when_key_is_missing(tmp_path, monkeypatch):
+    monkeypatch.delenv("CONTEXTOS_SYNC_KEY", raising=False)
+    init_project_with_task(tmp_path)
+    configure_sync(tmp_path)
+
+    result = runner.invoke(app, ["sync", "push", "--root", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "CONTEXTOS_SYNC_KEY is required" in result.output
+
+
+def test_sync_pull_writes_decrypted_bundle_to_explicit_output_without_overwriting_contextos(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_SYNC_KEY", "test-sync-key")
+    init_project_with_task(tmp_path)
+    configure_sync(tmp_path)
+    original_latest = (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+    encrypted_payload = encrypt_bytes(b"zip-bytes-from-cloud")
+
+    def fake_http(method, url, payload=None):
+        return {
+            "bundle_id": "bundle_123",
+            "encrypted_payload": encrypted_payload,
+        }
+
+    monkeypatch.setattr("checkpoint_cli.sync.http_json", fake_http)
+    output = tmp_path / "pulled.zip"
+
+    result = runner.invoke(
+        app,
+        ["sync", "pull", "--root", str(tmp_path), "--bundle", "bundle_123", "--output", str(output), "--json"],
+    )
+
+    assert result.exit_code == 0
+    assert output.read_bytes() == b"zip-bytes-from-cloud"
+    assert (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8") == original_latest
+    assert json.loads(result.output)["bytes_written"] == len(b"zip-bytes-from-cloud")
+
+
+def test_sync_missing_extra_prints_install_hint(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_SYNC_KEY", "test-sync-key")
+    init_project_with_task(tmp_path)
+    configure_sync(tmp_path)
+    original_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "cryptography.fernet":
+            raise ImportError("missing cryptography")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    result = runner.invoke(app, ["sync", "push", "--root", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "checkpoint-cli[sync]" in result.output
+
+
+def test_sync_encryption_round_trip_and_wrong_key_failure(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_SYNC_KEY", "test-sync-key")
+    init_project_with_task(tmp_path)
+
+    packaged = package_contextos(ProjectPaths(root=tmp_path))
+    encrypted = encrypt_bytes(packaged)
+
+    assert b"TASK-001" in packaged
+    assert "TASK-001" not in encrypted
+    assert decrypt_text(encrypted) == packaged
+    monkeypatch.setenv("CONTEXTOS_SYNC_KEY", "wrong-key")
+    with pytest.raises(Exception, match="Could not decrypt"):
+        decrypt_text(encrypted)
 
 
 def test_repo_map_refresh_status_and_query(tmp_path):
