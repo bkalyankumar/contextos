@@ -162,6 +162,8 @@ checkpoint finalize --from codex --to claude-code --task TASK-001 \
 | `checkpoint resume` | Build a lower-level resume pack for a specific agent |
 | `checkpoint handoff` | Record a handoff between agents |
 | `checkpoint finalize` | Close out work with execution evidence, memory updates, and a handoff |
+| `checkpoint history` | Inspect recent local ContextOS events |
+| `checkpoint memory` | List or search local failure, strategy, and area memory |
 | `checkpoint doctor` | Diagnose continuity health and stale or missing state |
 | `checkpoint view` | Generate Markdown and Mermaid continuity reports |
 | `checkpoint guard` | Check continuity quality before startup, edits, final answers, or finalize |
@@ -179,6 +181,10 @@ checkpoint continue --from codex --for claude-code --task TASK-001
 checkpoint resume --for cursor --task TASK-001
 checkpoint handoff --from codex --to claude-code --task TASK-001 --status in_progress
 checkpoint finalize --from codex --task TASK-001 --status success --summary "Done"
+checkpoint finalize --summary "Done" --changed "src/parser.py" --test "pytest passed"
+checkpoint history
+checkpoint memory list
+checkpoint memory search "parser failure"
 checkpoint doctor --json
 checkpoint view
 checkpoint map refresh
@@ -242,9 +248,19 @@ active task runtime state, execution summary, failure memory, strategy memory,
 area memory, and audit-only contract compliance. Contracts are guidance and
 quality signals, not sandboxing or enforcement.
 
+For the common single-task case, `checkpoint finalize` can infer the current
+agent and task:
+
+```bash
+checkpoint finalize --summary "Fixed parser edge case" --changed "src/parser.py" --test "pytest passed"
+```
+
 `checkpoint map refresh` builds a lightweight stdlib RepoMap from paths, Python
 symbols, README/docs headings, and config files. It is intentionally useful
 before it is fancy: no Tree-sitter, no vector database, and no hidden service.
+
+`checkpoint history` and `checkpoint memory` make the runtime inspectable after
+it starts recording events, failures, strategies, and area summaries.
 
 Generated compatibility files make existing tools understand the same
 continuity layer:
@@ -292,6 +308,8 @@ Built now:
 - agent-specific continuation packs
 - local event logging
 - `checkpoint finalize` execution closeout
+- `checkpoint history`
+- `checkpoint memory list/search`
 - failure memory and strategy memory
 - audit-only execution contracts and compliance signals
 - Markdown and Mermaid continuity reports

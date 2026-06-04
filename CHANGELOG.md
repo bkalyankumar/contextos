@@ -4,6 +4,12 @@ All notable changes to Checkpoint are recorded here.
 
 ## Unreleased
 
+- Added `checkpoint history` for recent local ContextOS event inspection.
+- Added `checkpoint memory list/search` for failure, strategy, and area memory.
+- Made `checkpoint finalize` easier to run in the common case by inferring the
+  current agent and sole/latest task, plus shorter `--changed`, `--test`, and
+  `--next` aliases.
+
 ## 0.1.4 - 2026-06-04
 
 - Added `checkpoint finalize` for end-of-work closeout with execution evidence,
@@ -58,5 +64,10 @@ All notable changes to Checkpoint are recorded here.
 
 ## Migration Notes
 
+- After upgrading from `0.1.3` or earlier, newly generated runtime files may
+  appear under `.contextos/memory/`, `.contextos/repo-map/`,
+  `.contextos/reports/`, and `.contextos/state/latest-contract.json`. They are
+  local Markdown/JSON/JSONL continuity artifacts and can be reviewed or deleted
+  like the rest of local ContextOS state.
 - No migrations are required for `0.1.0`.
 - The project is still pre-release. Generated `.contextos/` files are Markdown and can be reviewed or edited directly.

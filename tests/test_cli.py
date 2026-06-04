@@ -582,6 +582,74 @@ def test_finalize_records_runtime_memory_handoff_and_contract_compliance(tmp_pat
     assert (tmp_path / ".contextos" / "memory" / "areas.json").exists()
 
 
+def test_finalize_infers_agent_and_task_with_short_aliases(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_AGENT", "codex")
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "--root",
+            str(tmp_path),
+            "--summary",
+            "Short closeout.",
+            "--changed",
+            "src/checkpoint_cli/cli.py",
+            "--test",
+            "pytest passed",
+            "--next",
+            "Continue with history.",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Finalized task: TASK-001" in result.output
+    assert "Finalized from: codex" in result.output
+    latest = (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+    assert "Short closeout." in latest
+    assert "Continue with history." in latest
+
+
+def test_history_and_memory_commands_surface_runtime_records(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_AGENT", "codex")
+    init_project_with_task(tmp_path)
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "--root",
+            str(tmp_path),
+            "--summary",
+            "Implemented parser strategy.",
+            "--changed",
+            "src/parser.py",
+            "--test",
+            "pytest parser passed",
+            "--failure-message",
+            "parser failed on blank input",
+            "--failure-file",
+            "src/parser.py",
+            "--failure-status",
+            "resolved",
+        ],
+    )
+    assert result.exit_code == 0
+
+    history = runner.invoke(app, ["history", "--root", str(tmp_path), "--json"])
+    memory_list = runner.invoke(app, ["memory", "list", "--root", str(tmp_path), "--json"])
+    memory_search = runner.invoke(app, ["memory", "search", "blank input", "--root", str(tmp_path), "--json"])
+
+    assert history.exit_code == 0
+    assert any(event["type"] == "execution.finalized" for event in json.loads(history.output)["events"])
+    assert memory_list.exit_code == 0
+    memory_payload = json.loads(memory_list.output)
+    assert memory_payload["failures"][0]["message"] == "parser failed on blank input"
+    assert memory_payload["strategies"][0]["summary"] == "Implemented parser strategy."
+    assert memory_search.exit_code == 0
+    assert json.loads(memory_search.output)["matches"][0]["kind"] == "failure"
+
+
 def test_repo_map_refresh_status_and_query(tmp_path):
     result = runner.invoke(app, ["init", "--root", str(tmp_path)])
     assert result.exit_code == 0

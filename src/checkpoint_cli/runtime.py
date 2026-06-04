@@ -157,6 +157,16 @@ def runtime_paths(paths: ProjectPaths) -> dict[str, Path]:
     }
 
 
+def latest_task_id(paths: ProjectPaths) -> str | None:
+    contract = load_latest_contract(paths)
+    if contract and contract.task_id:
+        return contract.task_id
+    tasks = list_active_tasks(paths)
+    if len(tasks) == 1:
+        return tasks[0].stem
+    return None
+
+
 def ensure_runtime_dirs(paths: ProjectPaths) -> None:
     for key in ["memory", "state", "reports", "repo_map"]:
         ensure_dir(runtime_paths(paths)[key])
@@ -578,6 +588,76 @@ def finalize_execution(
         "failure": asdict(failure) if failure else None,
         "strategy": asdict(strategy) if strategy else None,
     }
+
+
+def history_records(paths: ProjectPaths, *, limit: int = 20, event_type: str | None = None) -> dict[str, Any]:
+    records = read_jsonl(paths.events_file)
+    if event_type:
+        records = [record for record in records if record.get("type") == event_type]
+    limited = list(reversed(records))[:limit]
+    return {
+        "status": "ok",
+        "limit": limit,
+        "event_type": event_type,
+        "events": limited,
+    }
+
+
+def memory_records(paths: ProjectPaths, *, kind: str = "all", limit: int = 20) -> dict[str, Any]:
+    normalized = normalize_memory_kind(kind)
+    payload: dict[str, Any] = {"status": "ok", "kind": normalized, "limit": limit}
+    if normalized in {"all", "failures"}:
+        payload["failures"] = list(reversed(read_jsonl(runtime_paths(paths)["failures"])))[:limit]
+    if normalized in {"all", "strategies"}:
+        payload["strategies"] = list(reversed(read_jsonl(runtime_paths(paths)["strategies"])))[:limit]
+    if normalized in {"all", "areas"}:
+        areas_path = runtime_paths(paths)["areas"]
+        if areas_path.exists():
+            try:
+                payload["areas"] = json.loads(areas_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                payload["areas"] = {"updated_at": None, "areas": {}}
+        else:
+            payload["areas"] = {"updated_at": None, "areas": {}}
+    return payload
+
+
+def search_memory(paths: ProjectPaths, *, query: str, kind: str = "all", limit: int = 20) -> dict[str, Any]:
+    normalized = normalize_memory_kind(kind)
+    query_tokens = set(tokens_for_text(query))
+    matches: list[dict[str, Any]] = []
+    if normalized in {"all", "failures"}:
+        matches.extend(score_memory_rows("failure", read_jsonl(runtime_paths(paths)["failures"]), query_tokens))
+    if normalized in {"all", "strategies"}:
+        matches.extend(score_memory_rows("strategy", read_jsonl(runtime_paths(paths)["strategies"]), query_tokens))
+    matches.sort(key=lambda item: (-int(item["score"]), str(item.get("created_at", ""))))
+    return {
+        "status": "ok",
+        "query": redact_secrets(query),
+        "kind": normalized,
+        "matches": matches[:limit],
+    }
+
+
+def normalize_memory_kind(kind: str) -> str:
+    normalized = kind.strip().lower()
+    if normalized in {"failure", "failures"}:
+        return "failures"
+    if normalized in {"strategy", "strategies"}:
+        return "strategies"
+    if normalized in {"area", "areas"}:
+        return "areas"
+    return "all"
+
+
+def score_memory_rows(kind: str, rows: list[dict[str, Any]], query_tokens: set[str]) -> list[dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
+    for row in rows:
+        row_text = json.dumps(row, sort_keys=True, default=_json_default)
+        score = len(query_tokens & set(tokens_for_text(row_text)))
+        if score:
+            matches.append({"kind": kind, "score": score, "record": row})
+    return matches
 
 
 def iter_indexable_files(root: Path) -> list[Path]:
