@@ -765,11 +765,11 @@ def repo_map_status(paths: ProjectPaths) -> dict[str, Any]:
 def query_repo_map(paths: ProjectPaths, query: str, *, limit: int = 5) -> dict[str, Any]:
     index_path = runtime_paths(paths)["repo_map_index"]
     if not index_path.exists():
-        return {"query": query, "status": "missing", "matches": []}
+        return {"query": redact_secrets(query), "status": "missing", "matches": []}
     try:
         payload = json.loads(index_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return {"query": query, "status": "error", "matches": []}
+        return {"query": redact_secrets(query), "status": "error", "matches": []}
     query_tokens = set(tokens_for_text(query))
     matches: list[dict[str, Any]] = []
     for entry in payload.get("entries", []):
@@ -788,7 +788,7 @@ def query_repo_map(paths: ProjectPaths, query: str, *, limit: int = 5) -> dict[s
                 }
             )
     matches.sort(key=lambda item: (-int(item["score"]), str(item["path"])))
-    return {"query": query, "status": "ok", "matches": matches[:limit]}
+    return {"query": redact_secrets(query), "status": "ok", "matches": matches[:limit]}
 
 
 def memory_counts(paths: ProjectPaths) -> dict[str, int]:
@@ -1017,15 +1017,15 @@ def mcp_server(paths: ProjectPaths, *, profile: str) -> int:
 
     @app.tool()  # type: ignore[untyped-decorator]
     def checkpoint_doctor() -> dict[str, Any]:
-        return doctor_report(paths)
+        return json_safe_payload(doctor_report(paths))
 
     @app.tool()  # type: ignore[untyped-decorator]
     def checkpoint_guard(action: str = "startup") -> dict[str, Any]:
-        return guard_report(paths, action=action)
+        return json_safe_payload(guard_report(paths, action=action))
 
     @app.tool()  # type: ignore[untyped-decorator]
     def checkpoint_repo_map_query(query: str, limit: int = 5) -> dict[str, Any]:
-        return query_repo_map(paths, query, limit=limit)
+        return json_safe_payload(query_repo_map(paths, query, limit=limit))
 
     @app.resource("contextos://latest-handoff")  # type: ignore[untyped-decorator]
     def latest_handoff_resource() -> str:

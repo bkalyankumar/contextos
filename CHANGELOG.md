@@ -9,6 +9,8 @@ All notable changes to Checkpoint are recorded here.
 - Made `checkpoint finalize` easier to run in the common case by inferring the
   current agent and sole/latest task, plus shorter `--changed`, `--test`, and
   `--next` aliases.
+- Hardened optional MCP tool registration with JSON-safe/redacted tool payloads
+  and documented readonly vs full MCP profiles.
 
 ## 0.1.4 - 2026-06-04
 
@@ -69,5 +71,8 @@ All notable changes to Checkpoint are recorded here.
   `.contextos/reports/`, and `.contextos/state/latest-contract.json`. They are
   local Markdown/JSON/JSONL continuity artifacts and can be reviewed or deleted
   like the rest of local ContextOS state.
+- MCP support is optional. Installing `checkpoint-cli[mcp]` and running
+  `checkpoint mcp-server` does not change the local `.contextos/` schema by
+  itself; writes occur only through existing runtime actions such as finalize.
 - No migrations are required for `0.1.0`.
 - The project is still pre-release. Generated `.contextos/` files are Markdown and can be reviewed or edited directly.
