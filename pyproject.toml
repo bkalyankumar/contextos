@@ -53,6 +53,7 @@ Changelog = "https://github.com/bkalyankumar/contextos/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
+  "cryptography>=42.0.0",
   "mypy>=1.18.0",
   "pytest>=8.0.0",
   "ruff>=0.14.0",
