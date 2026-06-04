@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 from typer.testing import CliRunner
@@ -18,7 +19,7 @@ from checkpoint_cli.continuation import (
     detect_current_agent,
     resolve_continuation,
 )
-from checkpoint_cli.runtime import json_safe_payload
+from checkpoint_cli.runtime import json_safe_payload, mcp_server
 from checkpoint_cli.store import ProjectPaths
 
 runner = CliRunner()
@@ -708,8 +709,89 @@ def test_mcp_server_help_is_available_without_importing_optional_dependency():
     assert "MCP" in result.output
 
 
+def test_mcp_server_readonly_registers_expected_tools_and_resources(tmp_path, monkeypatch):
+    init_project_with_task(tmp_path)
+    fake = install_fake_fastmcp(monkeypatch)
+
+    result = mcp_server(ProjectPaths(root=tmp_path), profile="readonly")
+
+    assert result == 0
+    instance = fake.instances[-1]
+    assert sorted(instance.tools) == ["checkpoint_doctor", "checkpoint_guard", "checkpoint_repo_map_query"]
+    assert sorted(instance.resources) == ["contextos://active-task", "contextos://latest-handoff"]
+    assert instance.ran is True
+    doctor_payload = instance.tools["checkpoint_doctor"]()
+    guard_payload = instance.tools["checkpoint_guard"]("startup")
+    query_payload = instance.tools["checkpoint_repo_map_query"]("token=abc123", 5)
+    assert doctor_payload["root"] == str(tmp_path)
+    assert guard_payload["action"] == "startup"
+    assert query_payload["query"] == "token [REDACTED]"
+    assert instance.resources["contextos://active-task"]().startswith("# TASK-001")
+
+
+def test_mcp_server_full_registers_finalize_and_returns_json_safe_payload(tmp_path, monkeypatch):
+    init_project_with_task(tmp_path)
+    fake = install_fake_fastmcp(monkeypatch)
+
+    result = mcp_server(ProjectPaths(root=tmp_path), profile="full")
+
+    assert result == 0
+    instance = fake.instances[-1]
+    assert "checkpoint_finalize" in instance.tools
+    finalize_payload = instance.tools["checkpoint_finalize"](
+        "codex",
+        "claude-code",
+        "TASK-001",
+        "success",
+        "Finished with api_key=secret.",
+    )
+    assert finalize_payload["handoff_path"].endswith(".md")
+    assert finalize_payload["strategy"]["summary"] == "Finished with api_key [REDACTED]"
+    json.dumps(finalize_payload)
+
+
 def test_json_safe_payload_serializes_paths(tmp_path):
     payload = json_safe_payload({"path": tmp_path / "handoff.md", "nested": {"ok": True}})
 
     assert payload["path"] == str(tmp_path / "handoff.md")
     assert payload["nested"]["ok"] is True
+
+
+class FakeFastMCP:
+    instances = []
+
+    def __init__(self, name):
+        self.name = name
+        self.tools = {}
+        self.resources = {}
+        self.ran = False
+        self.instances.append(self)
+
+    def tool(self):
+        def decorator(func):
+            self.tools[func.__name__] = func
+            return func
+
+        return decorator
+
+    def resource(self, uri):
+        def decorator(func):
+            self.resources[uri] = func
+            return func
+
+        return decorator
+
+    def run(self):
+        self.ran = True
+
+
+def install_fake_fastmcp(monkeypatch):
+    FakeFastMCP.instances = []
+    mcp_module = ModuleType("mcp")
+    server_module = ModuleType("mcp.server")
+    fastmcp_module = ModuleType("mcp.server.fastmcp")
+    fastmcp_module.FastMCP = FakeFastMCP
+    monkeypatch.setitem(sys.modules, "mcp", mcp_module)
+    monkeypatch.setitem(sys.modules, "mcp.server", server_module)
+    monkeypatch.setitem(sys.modules, "mcp.server.fastmcp", fastmcp_module)
+    return FakeFastMCP

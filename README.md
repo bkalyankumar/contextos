@@ -262,6 +262,18 @@ before it is fancy: no Tree-sitter, no vector database, and no hidden service.
 `checkpoint history` and `checkpoint memory` make the runtime inspectable after
 it starts recording events, failures, strategies, and area summaries.
 
+Optional local MCP access is available when an agent or MCP client should read
+the same continuity state directly:
+
+```bash
+pip install "checkpoint-cli[mcp]"
+checkpoint mcp-server --root . --profile readonly
+```
+
+The `readonly` profile exposes diagnostics, guard checks, RepoMap query, latest
+handoff, and active task resources. Use `--profile full` only for trusted local
+clients that should be able to call finalize and write handoff/runtime state.
+
 Generated compatibility files make existing tools understand the same
 continuity layer:
 
