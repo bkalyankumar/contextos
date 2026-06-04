@@ -72,6 +72,16 @@ def print_raw(text: str) -> None:
     console.out(text.rstrip())
 
 
+def relative_receipt_path(path: Path | str | None, root: Path) -> str:
+    if not path:
+        return "not found"
+    resolved = Path(path).resolve()
+    try:
+        return str(resolved.relative_to(root.resolve()))
+    except ValueError:
+        return str(resolved)
+
+
 @app.command("setup-user")
 def setup_user(
     overwrite: bool = typer.Option(False, help="Overwrite existing user files."),
@@ -237,11 +247,12 @@ def handoff(
 
 @app.command("finalize")
 def finalize(
+    summary_arg: str = typer.Argument("", help="Optional closeout summary."),
     from_agent: str | None = typer.Option(None, "--from", help="Agent finalizing the work. Defaults to detected agent."),
     to_agent: str = typer.Option("codex", "--to", help="Next recommended agent."),
     task: str | None = typer.Option(None, "--task", help="Task id. Defaults to latest contract or sole active task."),
     status_value: str = typer.Option("success", "--status", help="Final status: success, failure, blocked, etc."),
-    summary: str = typer.Option("", help="Summary of what happened."),
+    summary: str = typer.Option("", "--summary", help="Summary of what happened. Overrides the positional summary."),
     files: str = typer.Option("", "--files", "--changed", help="Comma-separated files changed."),
     tests: str = typer.Option("", "--tests", "--test", help="Tests or validation run."),
     blockers: str = typer.Option("", help="Remaining blockers."),
@@ -260,8 +271,14 @@ def finalize(
     paths = ProjectPaths(root=root.resolve())
     resolved_from_agent = from_agent or detect_current_agent().agent
     resolved_task = task or latest_task_id(paths)
+    resolved_summary = summary or summary_arg
     if not resolved_task:
         console.print("Error: no task could be inferred for finalize.", markup=False)
+        active_tasks = list_active_tasks(paths)
+        if active_tasks:
+            console.print("Active task candidates:", markup=False)
+            for active_task in active_tasks:
+                console.print(f"- --task {active_task.stem} ({active_task.name})", markup=False)
         console.print("Pass `--task <TASK-ID>` or keep exactly one active task.", markup=False)
         raise typer.Exit(1)
     try:
@@ -271,7 +288,7 @@ def finalize(
             to_agent=to_agent,
             task_id=resolved_task,
             status=status_value,
-            summary=summary,
+            summary=resolved_summary,
             files=files,
             tests=tests,
             blockers=blockers,
@@ -288,10 +305,21 @@ def finalize(
     except StoreFilesystemError as exc:
         print_filesystem_error(exc)
         raise typer.Exit(1) from exc
+    memory_counts = result["memory_counts"]
     console.print(f"Finalized task: {resolved_task}", markup=False)
     console.print(f"Finalized from: {resolved_from_agent}", markup=False)
-    console.print(f"Updated handoff: {result['handoff_path'].relative_to(root.resolve())}", markup=False)
+    console.print(f"Updated handoff: {relative_receipt_path(result['handoff_path'], root)}", markup=False)
+    console.print(f"Updated latest handoff: {relative_receipt_path(result['latest_handoff_path'], root)}", markup=False)
+    console.print(f"Updated task state: {relative_receipt_path(result['task_path'], root)}", markup=False)
+    console.print(f"Updated execution summary: {relative_receipt_path(result['execution_summary_path'], root)}", markup=False)
     console.print(f"Contract compliance: {result['contract_compliance']['status']}", markup=False)
+    console.print(
+        "Memory records: "
+        f"{memory_counts['failures']} failures, "
+        f"{memory_counts['strategies']} strategies, "
+        f"{memory_counts['areas']} areas",
+        markup=False,
+    )
     if result["failure"]:
         console.print("Recorded failure memory.", markup=False)
     if result["strategy"]:

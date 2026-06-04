@@ -9,6 +9,8 @@ All notable changes to Checkpoint are recorded here.
 - Made `checkpoint finalize` easier to run in the common case by inferring the
   current agent and sole/latest task, plus shorter `--changed`, `--test`, and
   `--next` aliases.
+- Added positional `checkpoint finalize "summary"` support, contract-derived
+  default next actions, clearer ambiguous-task guidance, and closeout receipts.
 - Hardened optional MCP tool registration with JSON-safe/redacted tool payloads
   and documented readonly vs full MCP profiles.
 

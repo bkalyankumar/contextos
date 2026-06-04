@@ -143,9 +143,8 @@ When work ends, finalize the execution so the next agent starts from what
 actually happened:
 
 ```bash
-checkpoint finalize --from codex --to claude-code --task TASK-001 \
-  --status success \
-  --summary "Implemented the parser fix" \
+checkpoint finalize "Implemented the parser fix" \
+  --from codex --to claude-code --task TASK-001 --status success \
   --files "src/parser.py,tests/test_parser.py" \
   --tests "pytest tests/test_parser.py passed" \
   --next-action "Debug the remaining edge case in Claude Code"
@@ -181,7 +180,7 @@ checkpoint continue --from codex --for claude-code --task TASK-001
 checkpoint resume --for cursor --task TASK-001
 checkpoint handoff --from codex --to claude-code --task TASK-001 --status in_progress
 checkpoint finalize --from codex --task TASK-001 --status success --summary "Done"
-checkpoint finalize --summary "Done" --changed "src/parser.py" --test "pytest passed"
+checkpoint finalize "Done" --changed "src/parser.py" --test "pytest passed"
 checkpoint history
 checkpoint memory list
 checkpoint memory search "parser failure"
@@ -252,8 +251,13 @@ For the common single-task case, `checkpoint finalize` can infer the current
 agent and task:
 
 ```bash
-checkpoint finalize --summary "Fixed parser edge case" --changed "src/parser.py" --test "pytest passed"
+checkpoint finalize "Fixed parser edge case" --changed "src/parser.py" --test "pytest passed"
 ```
+
+Use `checkpoint finalize` as the normal end-of-work habit after `resume` or
+`continue`. `checkpoint handoff` remains available when you only want an
+explicit handoff file without recording execution evidence and continuity
+memory.
 
 `checkpoint map refresh` builds a lightweight stdlib RepoMap from paths, Python
 symbols, README/docs headings, and config files. It is intentionally useful
