@@ -167,6 +167,13 @@ def latest_task_id(paths: ProjectPaths) -> str | None:
     return None
 
 
+def default_finalize_next_action(paths: ProjectPaths) -> str:
+    contract = load_latest_contract(paths)
+    if contract and contract.finalize_instruction.strip():
+        return contract.finalize_instruction
+    return "Continue from the latest handoff."
+
+
 def ensure_runtime_dirs(paths: ProjectPaths) -> None:
     for key in ["memory", "state", "reports", "repo_map"]:
         ensure_dir(runtime_paths(paths)[key])
@@ -508,6 +515,7 @@ def finalize_execution(
     ensure_runtime_dirs(paths)
     clean_files = split_csv(files)
     commands = [tests] if tests.strip() else []
+    resolved_next_action = next_action or default_finalize_next_action(paths)
     compliance = evaluate_contract(paths, files=clean_files, tests=tests)
     append_jsonl(runtime_paths(paths)["contract_compliance"], asdict(compliance))
     failure = append_failure_memory(
@@ -543,7 +551,7 @@ def finalize_execution(
         tests=tests,
         blockers=blockers,
         decisions=decisions,
-        next_action=next_action,
+        next_action=resolved_next_action,
         compliance=compliance,
     )
     update_active_task_state(
@@ -554,7 +562,7 @@ def finalize_execution(
         files=clean_files,
         tests=tests,
         blockers=blockers,
-        next_action=next_action,
+        next_action=resolved_next_action,
     )
     handoff_path = create_handoff(
         paths,
@@ -567,7 +575,7 @@ def finalize_execution(
         tests_run=tests,
         blockers=blockers,
         decisions=decisions,
-        continuation_prompt=next_action,
+        continuation_prompt=resolved_next_action,
     )
     append_event(
         paths,
@@ -584,6 +592,15 @@ def finalize_execution(
     )
     return {
         "handoff_path": handoff_path,
+        "latest_handoff_path": paths.latest_handoff,
+        "task_path": task_path,
+        "execution_summary_path": runtime_paths(paths)["execution_summary"],
+        "memory_counts": {
+            "failures": len(read_jsonl(runtime_paths(paths)["failures"])),
+            "strategies": len(read_jsonl(runtime_paths(paths)["strategies"])),
+            "areas": len(json.loads(read_text(runtime_paths(paths)["areas"], "{}")).get("areas", {})),
+        },
+        "next_action": redact_secrets(resolved_next_action),
         "contract_compliance": asdict(compliance),
         "failure": asdict(failure) if failure else None,
         "strategy": asdict(strategy) if strategy else None,

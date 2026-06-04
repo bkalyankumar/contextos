@@ -612,6 +612,108 @@ def test_finalize_infers_agent_and_task_with_short_aliases(tmp_path, monkeypatch
     assert "Continue with history." in latest
 
 
+def test_finalize_accepts_positional_summary_and_redacts_it(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_AGENT", "codex")
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "Fixed parser with token=abc123.",
+            "--root",
+            str(tmp_path),
+            "--changed",
+            "src/parser.py",
+            "--test",
+            "pytest passed",
+        ],
+    )
+
+    assert result.exit_code == 0
+    latest = (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+    assert "Fixed parser with token [REDACTED]" in latest
+    assert "abc123" not in latest
+    assert "abc123" not in result.output
+
+
+def test_finalize_summary_option_overrides_positional_summary(tmp_path):
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "Positional summary should not be stored.",
+            "--root",
+            str(tmp_path),
+            "--summary",
+            "Option summary wins.",
+        ],
+    )
+
+    assert result.exit_code == 0
+    latest = (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+    assert "Option summary wins." in latest
+    assert "Positional summary should not be stored." not in latest
+
+
+def test_finalize_uses_contract_finalize_instruction_when_next_is_omitted(tmp_path):
+    init_project_with_task(tmp_path)
+    resume_result = runner.invoke(app, ["resume", "--root", str(tmp_path), "--for", "codex", "--task", "TASK-001"])
+    assert resume_result.exit_code == 0
+    contract_path = tmp_path / ".contextos" / "state" / "latest-contract.json"
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    contract["finalize_instruction"] = "Hand this to Claude Code for follow-up validation."
+    contract_path.write_text(json.dumps(contract), encoding="utf-8")
+
+    result = runner.invoke(app, ["finalize", "Closeout summary.", "--root", str(tmp_path), "--task", "TASK-001"])
+
+    assert result.exit_code == 0
+    latest = (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+    execution_summary = (tmp_path / ".contextos" / "state" / "latest-execution-summary.md").read_text(encoding="utf-8")
+    assert "Hand this to Claude Code for follow-up validation." in latest
+    assert "Hand this to Claude Code for follow-up validation." in execution_summary
+
+
+def test_finalize_ambiguous_tasks_lists_task_candidates(tmp_path):
+    init_project_with_task(tmp_path)
+    task_dir = tmp_path / ".contextos" / "tasks" / "active"
+    (task_dir / "TASK-002.md").write_text("# TASK-002\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["finalize", "Closeout summary.", "--root", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "Error: no task could be inferred for finalize." in result.output
+    assert "- --task TASK-001 (TASK-001.md)" in result.output
+    assert "- --task TASK-002 (TASK-002.md)" in result.output
+
+
+def test_finalize_receipt_includes_updated_paths_and_memory_counts(tmp_path):
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "Closeout summary.",
+            "--root",
+            str(tmp_path),
+            "--changed",
+            "src/checkpoint_cli/cli.py",
+            "--test",
+            "pytest passed",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Updated handoff: .contextos/handoffs/" in result.output
+    assert "Updated latest handoff: .contextos/handoffs/latest.md" in result.output
+    assert "Updated task state: .contextos/tasks/active/TASK-001.md" in result.output
+    assert "Updated execution summary: .contextos/state/latest-execution-summary.md" in result.output
+    assert "Memory records: 0 failures, 1 strategies" in result.output
+
+
 def test_history_and_memory_commands_surface_runtime_records(tmp_path, monkeypatch):
     monkeypatch.setenv("CONTEXTOS_AGENT", "codex")
     init_project_with_task(tmp_path)
