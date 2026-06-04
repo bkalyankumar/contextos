@@ -15,6 +15,8 @@ All notable changes to Checkpoint are recorded here.
   and documented readonly vs full MCP profiles.
 - Added `checkpoint mcp-server --check --json` for validation-only MCP smoke
   checks without starting the server or writing local state.
+- Added opt-in `checkpoint sync configure/status/push/pull` client commands for
+  ciphertext-only ContextOS Cloud sync contract testing.
 
 ## 0.1.4 - 2026-06-04
 
@@ -78,5 +80,9 @@ All notable changes to Checkpoint are recorded here.
 - MCP support is optional. Installing `checkpoint-cli[mcp]` and running
   `checkpoint mcp-server` does not change the local `.contextos/` schema by
   itself; writes occur only through existing runtime actions such as finalize.
+- Sync support is optional. Installing `checkpoint-cli[sync]` enables encrypted
+  bundle push/pull, stores local config under `.contextos/sync/config.json`, and
+  reads the encryption secret from `CONTEXTOS_SYNC_KEY`; cloud receives
+  ciphertext only.
 - No migrations are required for `0.1.0`.
 - The project is still pre-release. Generated `.contextos/` files are Markdown and can be reviewed or edited directly.
