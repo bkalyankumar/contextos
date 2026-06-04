@@ -13,6 +13,8 @@ All notable changes to Checkpoint are recorded here.
   default next actions, clearer ambiguous-task guidance, and closeout receipts.
 - Hardened optional MCP tool registration with JSON-safe/redacted tool payloads
   and documented readonly vs full MCP profiles.
+- Added `checkpoint mcp-server --check --json` for validation-only MCP smoke
+  checks without starting the server or writing local state.
 
 ## 0.1.4 - 2026-06-04
 
