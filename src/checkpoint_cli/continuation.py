@@ -314,6 +314,9 @@ def generate_continuation_pack(
         target_agent=target_agent,
         task_id=task_id,
     )
+    from .runtime import create_execution_contract
+
+    create_execution_contract(paths, target_agent=context.target_agent, task_id=context.task_id)
     return render_continuation_pack(context), context
 
 
