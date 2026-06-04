@@ -271,12 +271,15 @@ the same continuity state directly:
 
 ```bash
 pip install "checkpoint-cli[mcp]"
+checkpoint mcp-server --root . --profile readonly --check --json
 checkpoint mcp-server --root . --profile readonly
 ```
 
 The `readonly` profile exposes diagnostics, guard checks, RepoMap query, latest
 handoff, and active task resources. Use `--profile full` only for trusted local
 clients that should be able to call finalize and write handoff/runtime state.
+The `--check` mode validates optional MCP registration without starting the
+server or writing local ContextOS state.
 
 Generated compatibility files make existing tools understand the same
 continuity layer:

@@ -102,6 +102,13 @@ class RepoMapEntry:
     size: int
 
 
+@dataclass(frozen=True)
+class McpRegistration:
+    app: Any
+    tools: list[str]
+    resources: list[str]
+
+
 def _json_default(value: object) -> object:
     if isinstance(value, Path):
         return str(value)
@@ -1020,33 +1027,33 @@ def json_safe_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return cast(dict[str, Any], json.loads(json.dumps(payload, default=_json_default)))
 
 
-def mcp_server(paths: ProjectPaths, *, profile: str) -> int:
-    try:
-        from mcp.server.fastmcp import FastMCP  # type: ignore[import-not-found]
-    except ImportError:
-        print(
-            "MCP support is not installed. Install with `pip install 'checkpoint-cli[mcp]'`.",
-            file=sys.stderr,
-        )
-        return 1
-
-    app: Any = FastMCP("checkpoint")
+def register_mcp_surfaces(app: Any, paths: ProjectPaths, *, profile: str) -> McpRegistration:
+    tools: list[str] = []
+    resources: list[str] = []
 
     @app.tool()  # type: ignore[untyped-decorator]
     def checkpoint_doctor() -> dict[str, Any]:
         return json_safe_payload(doctor_report(paths))
 
+    tools.append("checkpoint_doctor")
+
     @app.tool()  # type: ignore[untyped-decorator]
     def checkpoint_guard(action: str = "startup") -> dict[str, Any]:
         return json_safe_payload(guard_report(paths, action=action))
+
+    tools.append("checkpoint_guard")
 
     @app.tool()  # type: ignore[untyped-decorator]
     def checkpoint_repo_map_query(query: str, limit: int = 5) -> dict[str, Any]:
         return json_safe_payload(query_repo_map(paths, query, limit=limit))
 
+    tools.append("checkpoint_repo_map_query")
+
     @app.resource("contextos://latest-handoff")  # type: ignore[untyped-decorator]
     def latest_handoff_resource() -> str:
         return redact_secrets(read_text(paths.latest_handoff, "No latest handoff found."))
+
+    resources.append("contextos://latest-handoff")
 
     @app.resource("contextos://active-task")  # type: ignore[untyped-decorator]
     def active_task_resource() -> str:
@@ -1054,6 +1061,8 @@ def mcp_server(paths: ProjectPaths, *, profile: str) -> int:
         if not tasks:
             return "No active task found."
         return redact_secrets(read_text(tasks[0]))
+
+    resources.append("contextos://active-task")
 
     if profile == "full":
 
@@ -1087,6 +1096,45 @@ def mcp_server(paths: ProjectPaths, *, profile: str) -> int:
                     failure_resolution="",
                 )
             )
+
+        tools.append("checkpoint_finalize")
+
+    return McpRegistration(app=app, tools=tools, resources=resources)
+
+
+def mcp_check_payload(paths: ProjectPaths, *, profile: str, registration: McpRegistration) -> dict[str, Any]:
+    payload = {
+        "status": "ok",
+        "mcp_installed": True,
+        "profile": profile,
+        "root": paths.root,
+        "tools": sorted(registration.tools),
+        "resources": sorted(registration.resources),
+        "run_started": False,
+    }
+    json_safe_payload(payload)
+    return json_safe_payload({**payload, "json_safe_payload": "ok"})
+
+
+def mcp_server(paths: ProjectPaths, *, profile: str, check: bool = False, json_flag: bool = False) -> int:
+    try:
+        from mcp.server.fastmcp import FastMCP  # type: ignore[import-not-found]
+    except ImportError:
+        print(
+            "MCP support is not installed. Install with `pip install 'checkpoint-cli[mcp]'`.",
+            file=sys.stderr,
+        )
+        return 1
+
+    app: Any = FastMCP("checkpoint")
+    registration = register_mcp_surfaces(app, paths, profile=profile)
+    if check:
+        payload = mcp_check_payload(paths, profile=profile, registration=registration)
+        if json_flag:
+            print(json_output(payload))
+        else:
+            print(f"MCP check passed for {profile}: {len(registration.tools)} tools, {len(registration.resources)} resources.")
+        return 0
 
     app.run()
     return 0

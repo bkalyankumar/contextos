@@ -475,11 +475,13 @@ def memory_search(
 @app.command("mcp-server")
 def mcp_server_command(
     profile: str = typer.Option("readonly", "--profile", help="readonly or full."),
+    check: bool = typer.Option(False, "--check", help="Validate MCP registration without starting the server."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable check output."),
     root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
 ) -> None:
     """Run the optional local MCP server over ContextOS continuity state."""
     normalized = "full" if profile == "full" else "readonly"
-    raise typer.Exit(mcp_server(ProjectPaths(root=root.resolve()), profile=normalized))
+    raise typer.Exit(mcp_server(ProjectPaths(root=root.resolve()), profile=normalized, check=check, json_flag=json_flag))
 
 
 @map_app.command("refresh")

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import builtins
+import importlib.util
 import json
 import os
 import subprocess
@@ -831,6 +833,68 @@ def test_mcp_server_readonly_registers_expected_tools_and_resources(tmp_path, mo
     assert instance.resources["contextos://active-task"]().startswith("# TASK-001")
 
 
+def test_mcp_server_readonly_check_reports_registration_without_running(tmp_path, monkeypatch):
+    init_project_with_task(tmp_path)
+    fake = install_fake_fastmcp(monkeypatch)
+
+    result = runner.invoke(
+        app,
+        ["mcp-server", "--root", str(tmp_path), "--profile", "readonly", "--check", "--json"],
+    )
+
+    assert result.exit_code == 0
+    instance = fake.instances[-1]
+    payload = json.loads(result.output)
+    assert payload["status"] == "ok"
+    assert payload["mcp_installed"] is True
+    assert payload["profile"] == "readonly"
+    assert payload["root"] == str(tmp_path)
+    assert payload["tools"] == ["checkpoint_doctor", "checkpoint_guard", "checkpoint_repo_map_query"]
+    assert payload["resources"] == ["contextos://active-task", "contextos://latest-handoff"]
+    assert payload["json_safe_payload"] == "ok"
+    assert payload["run_started"] is False
+    assert instance.ran is False
+    json.dumps(payload)
+
+
+def test_mcp_server_full_check_reports_finalize_without_calling_it(tmp_path, monkeypatch):
+    init_project_with_task(tmp_path)
+    fake = install_fake_fastmcp(monkeypatch)
+
+    result = runner.invoke(app, ["mcp-server", "--root", str(tmp_path), "--profile", "full", "--check", "--json"])
+
+    assert result.exit_code == 0
+    instance = fake.instances[-1]
+    payload = json.loads(result.output)
+    assert payload["tools"] == [
+        "checkpoint_doctor",
+        "checkpoint_finalize",
+        "checkpoint_guard",
+        "checkpoint_repo_map_query",
+    ]
+    assert instance.ran is False
+    assert not (tmp_path / ".contextos" / "state" / "latest-execution-summary.md").exists()
+    assert (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8").startswith(
+        "# Latest Handoff"
+    )
+
+
+def test_mcp_server_check_preserves_missing_extra_install_hint(tmp_path, monkeypatch):
+    original_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "mcp.server.fastmcp":
+            raise ImportError("missing mcp")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    result = runner.invoke(app, ["mcp-server", "--root", str(tmp_path), "--check", "--json"])
+
+    assert result.exit_code == 1
+    assert "pip install 'checkpoint-cli[mcp]'" in result.stderr
+
+
 def test_mcp_server_full_registers_finalize_and_returns_json_safe_payload(tmp_path, monkeypatch):
     init_project_with_task(tmp_path)
     fake = install_fake_fastmcp(monkeypatch)
@@ -850,6 +914,27 @@ def test_mcp_server_full_registers_finalize_and_returns_json_safe_payload(tmp_pa
     assert finalize_payload["handoff_path"].endswith(".md")
     assert finalize_payload["strategy"]["summary"] == "Finished with api_key [REDACTED]"
     json.dumps(finalize_payload)
+
+
+def test_real_mcp_check_smoke_when_optional_dependency_is_installed(tmp_path):
+    try:
+        mcp_spec = importlib.util.find_spec("mcp.server.fastmcp")
+    except ModuleNotFoundError:
+        mcp_spec = None
+    if mcp_spec is None:
+        pytest.skip("optional mcp dependency is not installed")
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["mcp-server", "--root", str(tmp_path), "--profile", "readonly", "--check", "--json"],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["profile"] == "readonly"
+    assert payload["tools"] == ["checkpoint_doctor", "checkpoint_guard", "checkpoint_repo_map_query"]
+    assert payload["resources"] == ["contextos://active-task", "contextos://latest-handoff"]
 
 
 def test_json_safe_payload_serializes_paths(tmp_path):
