@@ -73,6 +73,24 @@ checkpoint init
 checkpoint status
 checkpoint continue
 ```
+Here is what that looks like in a real project:
+
+**Setting up ContextOS in under a minute**
+
+
+https://github.com/user-attachments/assets/0d30d66c-b267-4dd9-b9ee-6fe3c52f7646
+
+
+> You're mid-task in Claude. Feature is half done, context is in your head.
+> Now you want Codex to take over — without re-explaining everything.
+>
+> One command hands off everything Claude knew to Codex.
+
+**Handing off from Claude to Codex with Checkpoint**
+
+
+https://github.com/user-attachments/assets/0f5b3113-4cca-474f-8dc4-56a4375ae88a
+
 
 Or run the tiny demo flow from a source checkout:
 
