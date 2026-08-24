@@ -18,6 +18,7 @@ from checkpoint_cli.continuation import (
     detect_current_agent,
     resolve_continuation,
 )
+from checkpoint_cli.runtime import json_safe_payload
 from checkpoint_cli.store import ProjectPaths
 
 runner = CliRunner()
@@ -157,6 +158,10 @@ None.
     assert result.output.index("## Current Task And Status") < result.output.index("## Current Blocker")
     assert result.output.index("## Current Blocker") < result.output.index("## Non-Negotiable Constraints")
     assert result.output.index("## Relevant Files") < result.output.index("## Recent Handoff")
+    contract = json.loads((tmp_path / ".contextos" / "state" / "latest-contract.json").read_text(encoding="utf-8"))
+    assert contract["target_agent"] == "codex"
+    assert contract["task_id"] == "TASK-001"
+    assert "tests/test_cli.py" in contract["expected_files"]
 
 
 def test_resume_outputs_agent_specific_context_packs(tmp_path):
@@ -503,3 +508,208 @@ def test_resolver_matrix_named_failures_and_fallback(tmp_path, monkeypatch):
     detection = detect_current_agent(environ={"CODEX_SANDBOX": "sandboxed"})
     assert detection.agent == "codex"
     assert detection.clues[0].value == "present"
+
+
+def test_finalize_records_runtime_memory_handoff_and_contract_compliance(tmp_path):
+    init_project_with_task(tmp_path)
+    resume_result = runner.invoke(app, ["resume", "--root", str(tmp_path), "--for", "codex", "--task", "TASK-001"])
+    assert resume_result.exit_code == 0
+
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "--root",
+            str(tmp_path),
+            "--from",
+            "codex",
+            "--to",
+            "claude-code",
+            "--task",
+            "TASK-001",
+            "--status",
+            "success",
+            "--summary",
+            "Implemented runtime memory and fixed token=abc123.",
+            "--files",
+            "src/checkpoint_cli/cli.py,tests/test_cli.py",
+            "--tests",
+            "pytest passed",
+            "--decisions",
+            "Keep runtime audit-only.",
+            "--next-action",
+            "Review the generated continuity view.",
+            "--failure-command",
+            "pytest tests/test_cli.py",
+            "--failure-exit-code",
+            "1",
+            "--failure-message",
+            "old assertion failed with api_key=secret",
+            "--failure-file",
+            "tests/test_cli.py",
+            "--failure-phase",
+            "test",
+            "--failure-status",
+            "resolved",
+            "--failure-resolution",
+            "Updated the assertion.",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Finalized task: TASK-001" in result.output
+    assert "Contract compliance:" in result.output
+    assert (tmp_path / ".contextos" / "state" / "latest-execution-summary.md").exists()
+    assert "token [REDACTED]" in (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+    assert "abc123" not in (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+
+    failures = [
+        json.loads(line)
+        for line in (tmp_path / ".contextos" / "memory" / "failures.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    strategies = [
+        json.loads(line)
+        for line in (tmp_path / ".contextos" / "memory" / "strategies.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    compliance = [
+        json.loads(line)
+        for line in (tmp_path / ".contextos" / "state" / "contract-compliance.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert failures[0]["status"] == "resolved"
+    assert failures[0]["message"] == "old assertion failed with api_key [REDACTED]"
+    assert strategies[0]["task_id"] == "TASK-001"
+    assert compliance[-1]["status"] in {"followed", "partially_followed"}
+    assert (tmp_path / ".contextos" / "memory" / "areas.json").exists()
+
+
+def test_finalize_infers_agent_and_task_with_short_aliases(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_AGENT", "codex")
+    init_project_with_task(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "--root",
+            str(tmp_path),
+            "--summary",
+            "Short closeout.",
+            "--changed",
+            "src/checkpoint_cli/cli.py",
+            "--test",
+            "pytest passed",
+            "--next",
+            "Continue with history.",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Finalized task: TASK-001" in result.output
+    assert "Finalized from: codex" in result.output
+    latest = (tmp_path / ".contextos" / "handoffs" / "latest.md").read_text(encoding="utf-8")
+    assert "Short closeout." in latest
+    assert "Continue with history." in latest
+
+
+def test_history_and_memory_commands_surface_runtime_records(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_AGENT", "codex")
+    init_project_with_task(tmp_path)
+    result = runner.invoke(
+        app,
+        [
+            "finalize",
+            "--root",
+            str(tmp_path),
+            "--summary",
+            "Implemented parser strategy.",
+            "--changed",
+            "src/parser.py",
+            "--test",
+            "pytest parser passed",
+            "--failure-message",
+            "parser failed on blank input",
+            "--failure-file",
+            "src/parser.py",
+            "--failure-status",
+            "resolved",
+        ],
+    )
+    assert result.exit_code == 0
+
+    history = runner.invoke(app, ["history", "--root", str(tmp_path), "--json"])
+    memory_list = runner.invoke(app, ["memory", "list", "--root", str(tmp_path), "--json"])
+    memory_search = runner.invoke(app, ["memory", "search", "blank input", "--root", str(tmp_path), "--json"])
+
+    assert history.exit_code == 0
+    assert any(event["type"] == "execution.finalized" for event in json.loads(history.output)["events"])
+    assert memory_list.exit_code == 0
+    memory_payload = json.loads(memory_list.output)
+    assert memory_payload["failures"][0]["message"] == "parser failed on blank input"
+    assert memory_payload["strategies"][0]["summary"] == "Implemented parser strategy."
+    assert memory_search.exit_code == 0
+    assert json.loads(memory_search.output)["matches"][0]["kind"] == "failure"
+
+
+def test_repo_map_refresh_status_and_query(tmp_path):
+    result = runner.invoke(app, ["init", "--root", str(tmp_path)])
+    assert result.exit_code == 0
+    package = tmp_path / "src" / "demo"
+    package.mkdir(parents=True)
+    (package / "parser.py").write_text(
+        "class Parser:\n    def parse_tokens(self):\n        return []\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "README.md").write_text("# Demo Parser\n\n## Token workflow\n", encoding="utf-8")
+
+    refresh = runner.invoke(app, ["map", "refresh", "--root", str(tmp_path)])
+    status = runner.invoke(app, ["map", "status", "--root", str(tmp_path), "--json"])
+    query = runner.invoke(app, ["map", "query", "parse tokens", "--root", str(tmp_path), "--json"])
+
+    assert refresh.exit_code == 0
+    assert "RepoMap refreshed" in refresh.output
+    status_payload = json.loads(status.output)
+    query_payload = json.loads(query.output)
+    assert status_payload["index_available"] is True
+    assert status_payload["symbols_indexed"] >= 2
+    assert query_payload["status"] == "ok"
+    assert any(match["path"] == "src/demo/parser.py" for match in query_payload["matches"])
+
+
+def test_doctor_guard_view_and_steer_outputs(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTEXTOS_HOME", str(tmp_path / "home" / ".contextos"))
+    assert runner.invoke(app, ["setup-user"]).exit_code == 0
+    init_project_with_task(tmp_path)
+    assert runner.invoke(app, ["map", "refresh", "--root", str(tmp_path)]).exit_code == 0
+    assert runner.invoke(app, ["resume", "--root", str(tmp_path), "--for", "codex", "--task", "TASK-001"]).exit_code == 0
+
+    doctor = runner.invoke(app, ["doctor", "--root", str(tmp_path), "--json"])
+    guard = runner.invoke(app, ["guard", "--root", str(tmp_path), "--action", "final_answer", "--json"])
+    steer = runner.invoke(
+        app,
+        ["steer", "--message", "only edit src/checkpoint_cli/cli.py", "--current-action", "edit", "--json"],
+    )
+    view = runner.invoke(app, ["view", "--root", str(tmp_path)])
+
+    assert doctor.exit_code == 0
+    assert json.loads(doctor.output)["root"] == str(tmp_path)
+    assert guard.exit_code == 0
+    assert json.loads(guard.output)["action"] == "final_answer"
+    assert steer.exit_code == 0
+    assert json.loads(steer.output)["classification"] == "scope_constraint"
+    assert view.exit_code == 0
+    assert (tmp_path / ".contextos" / "reports" / "continuity-view.md").exists()
+    assert (tmp_path / ".contextos" / "reports" / "continuity-map.mmd").exists()
+
+
+def test_mcp_server_help_is_available_without_importing_optional_dependency():
+    result = runner.invoke(app, ["mcp-server", "--help"])
+
+    assert result.exit_code == 0
+    assert "MCP" in result.output
+
+
+def test_json_safe_payload_serializes_paths(tmp_path):
+    payload = json_safe_payload({"path": tmp_path / "handoff.md", "nested": {"ok": True}})
+
+    assert payload["path"] == str(tmp_path / "handoff.md")
+    assert payload["nested"]["ok"] is True

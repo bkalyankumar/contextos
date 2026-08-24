@@ -10,8 +10,26 @@ from .continuation import (
     ContinuationError,
     append_continue_event,
     detect_agent_report,
+    detect_current_agent,
     generate_continuation_pack,
     write_output_all_or_error,
+)
+from .runtime import (
+    build_repo_map,
+    classify_steer_message,
+    create_execution_contract,
+    doctor_report,
+    finalize_execution,
+    guard_report,
+    history_records,
+    json_output,
+    latest_task_id,
+    mcp_server,
+    memory_records,
+    query_repo_map,
+    render_continuity_view,
+    repo_map_status,
+    search_memory,
 )
 from .store import (
     ProjectPaths,
@@ -26,6 +44,10 @@ from .store import (
 )
 
 app = typer.Typer(no_args_is_help=True, help="Checkpoint CLI for local-first ContextOS continuity")
+map_app = typer.Typer(help="Build and query the local ContextOS RepoMap.")
+memory_app = typer.Typer(help="Inspect local failure, strategy, and area memory.")
+app.add_typer(map_app, name="map")
+app.add_typer(memory_app, name="memory")
 console = Console()
 
 
@@ -126,6 +148,7 @@ def resume(
     """Generate an ordered context pack for an agent."""
     paths = ProjectPaths(root=root.resolve())
     pack = generate_resume_pack(paths, target_agent=target_agent, mode=mode, task_id=task)
+    create_execution_contract(paths, target_agent=target_agent, task_id=task)
     if output:
         try:
             safe_write(output, pack, overwrite=True)
@@ -210,6 +233,275 @@ def handoff(
         raise typer.Exit(1) from exc
     console.print(f"Created handoff: {target.relative_to(root.resolve())}", markup=False)
     console.print(f"Updated latest handoff: {paths.latest_handoff.relative_to(root.resolve())}", markup=False)
+
+
+@app.command("finalize")
+def finalize(
+    from_agent: str | None = typer.Option(None, "--from", help="Agent finalizing the work. Defaults to detected agent."),
+    to_agent: str = typer.Option("codex", "--to", help="Next recommended agent."),
+    task: str | None = typer.Option(None, "--task", help="Task id. Defaults to latest contract or sole active task."),
+    status_value: str = typer.Option("success", "--status", help="Final status: success, failure, blocked, etc."),
+    summary: str = typer.Option("", help="Summary of what happened."),
+    files: str = typer.Option("", "--files", "--changed", help="Comma-separated files changed."),
+    tests: str = typer.Option("", "--tests", "--test", help="Tests or validation run."),
+    blockers: str = typer.Option("", help="Remaining blockers."),
+    decisions: str = typer.Option("", help="Durable decisions made."),
+    next_action: str = typer.Option("", "--next-action", "--next", help="Exact continuation prompt / next action."),
+    failure_command: str = typer.Option("", help="Failed command to record in failure memory."),
+    failure_exit_code: str = typer.Option("", help="Exit code for the failed command."),
+    failure_message: str = typer.Option("", help="Failure message or error summary."),
+    failure_file: str = typer.Option("", help="File related to the failure."),
+    failure_phase: str = typer.Option("", help="Failure phase, e.g. test, build, install."),
+    failure_status: str = typer.Option("observed", help="Failure status: observed, resolved, avoided."),
+    failure_resolution: str = typer.Option("", help="Resolution or note for the failure."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Finalize work and update handoff, task state, execution summary, and continuity memory."""
+    paths = ProjectPaths(root=root.resolve())
+    resolved_from_agent = from_agent or detect_current_agent().agent
+    resolved_task = task or latest_task_id(paths)
+    if not resolved_task:
+        console.print("Error: no task could be inferred for finalize.", markup=False)
+        console.print("Pass `--task <TASK-ID>` or keep exactly one active task.", markup=False)
+        raise typer.Exit(1)
+    try:
+        result = finalize_execution(
+            paths,
+            from_agent=resolved_from_agent,
+            to_agent=to_agent,
+            task_id=resolved_task,
+            status=status_value,
+            summary=summary,
+            files=files,
+            tests=tests,
+            blockers=blockers,
+            decisions=decisions,
+            next_action=next_action,
+            failure_command=failure_command,
+            failure_exit_code=failure_exit_code,
+            failure_message=failure_message,
+            failure_file=failure_file,
+            failure_phase=failure_phase,
+            failure_status=failure_status,
+            failure_resolution=failure_resolution,
+        )
+    except StoreFilesystemError as exc:
+        print_filesystem_error(exc)
+        raise typer.Exit(1) from exc
+    console.print(f"Finalized task: {resolved_task}", markup=False)
+    console.print(f"Finalized from: {resolved_from_agent}", markup=False)
+    console.print(f"Updated handoff: {result['handoff_path'].relative_to(root.resolve())}", markup=False)
+    console.print(f"Contract compliance: {result['contract_compliance']['status']}", markup=False)
+    if result["failure"]:
+        console.print("Recorded failure memory.", markup=False)
+    if result["strategy"]:
+        console.print("Recorded strategy memory.", markup=False)
+
+
+@app.command("history")
+def history(
+    limit: int = typer.Option(20, "--limit", help="Maximum events to show."),
+    event_type: str | None = typer.Option(None, "--type", help="Filter by event type."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable history."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Show recent ContextOS events from the local event log."""
+    result = history_records(ProjectPaths(root=root.resolve()), limit=limit, event_type=event_type)
+    if json_flag:
+        print_raw(json_output(result))
+        return
+    table = Table(title="ContextOS History")
+    table.add_column("Created")
+    table.add_column("Type")
+    table.add_column("Task")
+    table.add_column("Status")
+    for event in result["events"]:
+        table.add_row(
+            str(event.get("created_at", "")),
+            str(event.get("type", "")),
+            str(event.get("task_id", "")),
+            str(event.get("status", event.get("outcome", ""))),
+        )
+    console.print(table)
+
+
+@app.command("view")
+def view(
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Generate a local Markdown and Mermaid continuity view."""
+    paths = ProjectPaths(root=root.resolve())
+    try:
+        result = render_continuity_view(paths)
+    except StoreFilesystemError as exc:
+        print_filesystem_error(exc)
+        raise typer.Exit(1) from exc
+    console.print(f"Wrote continuity view: {result['view'].relative_to(root.resolve())}", markup=False)
+    console.print(f"Wrote continuity map: {result['map'].relative_to(root.resolve())}", markup=False)
+
+
+@app.command("doctor")
+def doctor(
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable diagnostics."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Inspect ContextOS continuity health."""
+    report = doctor_report(ProjectPaths(root=root.resolve()))
+    if json_flag:
+        print_raw(json_output(report))
+        return
+    table = Table(title="ContextOS Doctor")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Detail")
+    for check in report["checks"]:
+        table.add_row(check["name"], check["status"], check["detail"])
+    console.print(table)
+    if report["recommended_actions"]:
+        console.print("\nRecommended actions:", markup=False)
+        for action in report["recommended_actions"]:
+            console.print(f"- {action}", markup=False)
+
+
+@app.command("guard")
+def guard(
+    action: str = typer.Option("startup", "--action", help="startup, before_edit, scope_change, final_answer, finalize."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable guard output."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Run compact read-only continuity checks before a work boundary."""
+    report = guard_report(ProjectPaths(root=root.resolve()), action=action)
+    if json_flag:
+        print_raw(json_output(report))
+        return
+    console.print(f"Severity: {report['severity']}", markup=False)
+    console.print(report["message"], markup=False)
+    for warning in report["warnings"]:
+        console.print(f"- {warning['name']}: {warning['detail']}", markup=False)
+
+
+@app.command("steer")
+def steer(
+    message: str = typer.Option(..., "--message", help="User message or interruption to classify."),
+    current_action: str = typer.Option("", "--current-action", help="What the agent is currently doing."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable classification."),
+) -> None:
+    """Classify a user interruption during active work."""
+    report = classify_steer_message(message, current_action)
+    if json_flag:
+        print_raw(json_output(report))
+        return
+    console.print(f"Classification: {report['classification']}", markup=False)
+    console.print(report["recommended_response"], markup=False)
+
+
+@memory_app.command("list")
+def memory_list(
+    kind: str = typer.Option("all", "--kind", help="all, failures, strategies, or areas."),
+    limit: int = typer.Option(20, "--limit", help="Maximum records per kind."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable memory."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """List local continuity memory records."""
+    result = memory_records(ProjectPaths(root=root.resolve()), kind=kind, limit=limit)
+    if json_flag:
+        print_raw(json_output(result))
+        return
+    if "failures" in result:
+        console.print("Failures:", markup=False)
+        for row in result["failures"]:
+            console.print(f"- {row.get('created_at', '')} {row.get('status', '')}: {row.get('message', '')}", markup=False)
+    if "strategies" in result:
+        console.print("Strategies:", markup=False)
+        for row in result["strategies"]:
+            console.print(f"- {row.get('created_at', '')} {row.get('task_type', '')}: {row.get('summary', '')}", markup=False)
+    if "areas" in result:
+        console.print("Areas:", markup=False)
+        areas = result["areas"].get("areas", {}) if isinstance(result["areas"], dict) else {}
+        for area, counts in areas.items():
+            console.print(f"- {area}: {counts}", markup=False)
+
+
+@memory_app.command("search")
+def memory_search(
+    query: str = typer.Argument(..., help="Search query."),
+    kind: str = typer.Option("all", "--kind", help="all, failures, or strategies."),
+    limit: int = typer.Option(20, "--limit", help="Maximum matches."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable matches."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Search local failure and strategy memory."""
+    result = search_memory(ProjectPaths(root=root.resolve()), query=query, kind=kind, limit=limit)
+    if json_flag:
+        print_raw(json_output(result))
+        return
+    if not result["matches"]:
+        console.print(f"No memory matches for: {query}", markup=False)
+        return
+    for match in result["matches"]:
+        record = match["record"]
+        label = record.get("message") or record.get("summary") or record.get("task_id", "")
+        console.print(f"{match['kind']} score={match['score']}: {label}", markup=False)
+
+
+@app.command("mcp-server")
+def mcp_server_command(
+    profile: str = typer.Option("readonly", "--profile", help="readonly or full."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Run the optional local MCP server over ContextOS continuity state."""
+    normalized = "full" if profile == "full" else "readonly"
+    raise typer.Exit(mcp_server(ProjectPaths(root=root.resolve()), profile=normalized))
+
+
+@map_app.command("refresh")
+def map_refresh(
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Refresh the stdlib RepoMap index."""
+    try:
+        status = build_repo_map(ProjectPaths(root=root.resolve()))
+    except StoreFilesystemError as exc:
+        print_filesystem_error(exc)
+        raise typer.Exit(1) from exc
+    console.print(f"RepoMap refreshed: {status['files_indexed']} files, {status['symbols_indexed']} symbols", markup=False)
+
+
+@map_app.command("status")
+def map_status(
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable RepoMap status."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Show local RepoMap status."""
+    status = repo_map_status(ProjectPaths(root=root.resolve()))
+    if json_flag:
+        print_raw(json_output(status))
+        return
+    table = Table(title="ContextOS RepoMap")
+    table.add_column("Item")
+    table.add_column("Status")
+    for key in ["status", "provider_available", "index_available", "query_available", "refresh_available", "files_indexed", "symbols_indexed"]:
+        table.add_row(key, str(status.get(key, "unknown")))
+    console.print(table)
+
+
+@map_app.command("query")
+def map_query(
+    query: str = typer.Argument(..., help="Search query."),
+    limit: int = typer.Option(5, "--limit", help="Maximum matches."),
+    json_flag: bool = typer.Option(False, "--json", help="Print machine-readable matches."),
+    root: Path = typer.Option(Path.cwd(), "--root", help="Repository root."),
+) -> None:
+    """Query the local RepoMap index."""
+    result = query_repo_map(ProjectPaths(root=root.resolve()), query, limit=limit)
+    if json_flag:
+        print_raw(json_output(result))
+        return
+    if not result["matches"]:
+        console.print(f"No RepoMap matches for: {query}", markup=False)
+        return
+    for match in result["matches"]:
+        console.print(f"{match['path']} (score {match['score']})", markup=False)
 
 
 @app.command("show")

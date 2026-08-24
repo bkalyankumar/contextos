@@ -157,6 +157,18 @@ Write the pack to a file when you want to paste, attach, or inspect it later:
 checkpoint continue --for codex --output /tmp/contextos-pack.md
 ```
 
+When work ends, finalize the execution so the next agent starts from what
+actually happened:
+
+```bash
+checkpoint finalize --from codex --to claude-code --task TASK-001 \
+  --status success \
+  --summary "Implemented the parser fix" \
+  --files "src/parser.py,tests/test_parser.py" \
+  --tests "pytest tests/test_parser.py passed" \
+  --next-action "Debug the remaining edge case in Claude Code"
+```
+
 ## Commands
 
 | Command | Use it when you want to |
@@ -167,6 +179,15 @@ checkpoint continue --for codex --output /tmp/contextos-pack.md
 | `checkpoint continue` | Generate the next-agent continuation pack |
 | `checkpoint resume` | Build a lower-level resume pack for a specific agent |
 | `checkpoint handoff` | Record a handoff between agents |
+| `checkpoint finalize` | Close out work with execution evidence, memory updates, and a handoff |
+| `checkpoint history` | Inspect recent local ContextOS events |
+| `checkpoint memory` | List or search local failure, strategy, and area memory |
+| `checkpoint doctor` | Diagnose continuity health and stale or missing state |
+| `checkpoint view` | Generate Markdown and Mermaid continuity reports |
+| `checkpoint guard` | Check continuity quality before startup, edits, final answers, or finalize |
+| `checkpoint steer` | Classify user interruptions during active work |
+| `checkpoint map` | Refresh, inspect, and query the local RepoMap |
+| `checkpoint mcp-server` | Expose continuity through an optional local MCP server |
 | `checkpoint detect-agent` | Show the agent Checkpoint inferred from the environment |
 | `checkpoint show <path>` | Print a ContextOS file with safe path handling |
 
@@ -177,6 +198,15 @@ checkpoint continue --from codex
 checkpoint continue --from codex --for claude-code --task TASK-001
 checkpoint resume --for cursor --task TASK-001
 checkpoint handoff --from codex --to claude-code --task TASK-001 --status in_progress
+checkpoint finalize --from codex --task TASK-001 --status success --summary "Done"
+checkpoint finalize --summary "Done" --changed "src/parser.py" --test "pytest passed"
+checkpoint history
+checkpoint memory list
+checkpoint memory search "parser failure"
+checkpoint doctor --json
+checkpoint view
+checkpoint map refresh
+checkpoint map query "parser tests"
 checkpoint show .contextos/handoffs/latest.md
 ```
 
@@ -198,9 +228,23 @@ repo/.contextos/
     completed/
   handoffs/
     latest.md
+  memory/
+    failures.jsonl
+    strategies.jsonl
+    areas.json
+  repo-map/
+    manifest.json
+    index.json
+    status.json
+  reports/
+    continuity-view.md
+    continuity-map.mmd
   agents/
   state/
     events.jsonl
+    latest-contract.json
+    latest-execution-summary.md
+    contract-compliance.jsonl
 
 ~/.contextos/
   about-me.md
@@ -211,10 +255,30 @@ The projection flow is intentionally boring:
 ```text
 Local Markdown Store
   -> Checkpoint resolver
+  -> Execution contract
   -> Secret redaction
   -> Continuation Pack
   -> Next coding agent
 ```
+
+`checkpoint finalize` records observed evidence after work: handoff state,
+active task runtime state, execution summary, failure memory, strategy memory,
+area memory, and audit-only contract compliance. Contracts are guidance and
+quality signals, not sandboxing or enforcement.
+
+For the common single-task case, `checkpoint finalize` can infer the current
+agent and task:
+
+```bash
+checkpoint finalize --summary "Fixed parser edge case" --changed "src/parser.py" --test "pytest passed"
+```
+
+`checkpoint map refresh` builds a lightweight stdlib RepoMap from paths, Python
+symbols, README/docs headings, and config files. It is intentionally useful
+before it is fancy: no Tree-sitter, no vector database, and no hidden service.
+
+`checkpoint history` and `checkpoint memory` make the runtime inspectable after
+it starts recording events, failures, strategies, and area summaries.
 
 Generated compatibility files make existing tools understand the same
 continuity layer:
@@ -261,6 +325,16 @@ Built now:
 - durable handoff files
 - agent-specific continuation packs
 - local event logging
+- `checkpoint finalize` execution closeout
+- `checkpoint history`
+- `checkpoint memory list/search`
+- failure memory and strategy memory
+- audit-only execution contracts and compliance signals
+- Markdown and Mermaid continuity reports
+- continuity diagnostics with `checkpoint doctor`
+- continuity guard and steer helpers
+- stdlib RepoMap refresh/status/query
+- optional local MCP server via `checkpoint-cli[mcp]`
 - final redaction for generated continuation output
 - Apache-2.0 open-core CLI and schema
 
@@ -273,6 +347,7 @@ Next likely open-core improvements:
 - more redaction coverage
 - better examples for real agent-switch workflows
 - richer command output without hiding the underlying Markdown files
+- optional richer RepoMap providers once the stdlib index proves useful
 
 ## Install From Source
 
